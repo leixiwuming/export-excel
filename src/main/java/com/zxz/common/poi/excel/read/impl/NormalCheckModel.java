@@ -2,6 +2,7 @@ package com.zxz.common.poi.excel.read.impl;
 
 import com.zxz.common.poi.excel.abs.BaseCheck;
 import com.zxz.common.poi.excel.annotation.Mapping;
+import com.zxz.common.poi.excel.usermodel.AnnotationMeta;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
@@ -18,7 +19,7 @@ public class NormalCheckModel implements BaseCheck {
      * @return 是否通过
      */
     @Override
-    public boolean check(Row row, Map<Integer, Mapping> headClassAnnotation) {
+    public boolean check(Row row, Map<Integer, AnnotationMeta> headClassAnnotation) {
         if (row == null) {
             return false;
         }
@@ -29,8 +30,8 @@ public class NormalCheckModel implements BaseCheck {
         if (headClassAnnotation.size() > lastCellNum) {
             return false;
         }
-        Map<String, Mapping> collect = headClassAnnotation.values().
-                stream().collect(Collectors.toMap(Mapping::value, s -> s));
+        Map<String, AnnotationMeta> collect = headClassAnnotation.values().
+                stream().collect(Collectors.toMap(AnnotationMeta::getValue, s -> s));
         headClassAnnotation.clear();
 
         int errorCellNum = 0;
@@ -41,7 +42,7 @@ public class NormalCheckModel implements BaseCheck {
                 continue;
             }
             String stringCellValue = cell.getStringCellValue();
-            Mapping mapping = collect.get(stringCellValue);
+            AnnotationMeta mapping = collect.get(stringCellValue);
             if (mapping != null) {
                 headClassAnnotation.put(i,mapping);
             }

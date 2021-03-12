@@ -2,9 +2,9 @@ package com.zxz.common.poi.excel.read.impl;
 
 import com.zxz.common.poi.excel.abs.BaseCheck;
 import com.zxz.common.poi.excel.annotation.Mapping;
+import com.zxz.common.poi.excel.usermodel.AnnotationMeta;
 import com.zxz.common.poi.excel.util.CellUtil;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 
 import java.util.Map;
@@ -21,7 +21,7 @@ public class StrictCheckModel implements BaseCheck {
      * @return 是否通过
      */
     @Override
-    public boolean check(Row row, Map<Integer, Mapping> headClassAnnotation) {
+    public boolean check(Row row, Map<Integer, AnnotationMeta> headClassAnnotation) {
         int lastCellNum = row.getLastCellNum();
         if (lastCellNum == 0) {
             return false;
@@ -35,11 +35,11 @@ public class StrictCheckModel implements BaseCheck {
             if (checkType(cell)) {
                 return false;
             }
-            Mapping mapping = headClassAnnotation.get(i);
+            AnnotationMeta mapping = headClassAnnotation.get(i);
             if (mapping == null) {
                 return false;
             }
-            if (!mapping.value().equals(CellUtil.getCellValue(cell))) {
+            if (!mapping.getValue().equals(CellUtil.getCellValue(cell))) {
                 return false;
             }
         }

@@ -43,9 +43,10 @@ public class Assert {
             throw new BaseException(message);
         }
     }
-    public static void state(boolean expression, String message,int code) {
+
+    public static void state(boolean expression, String message, int code) {
         if (!expression) {
-            throw new BaseException(message,code);
+            throw new BaseException(message, code);
         }
     }
 }

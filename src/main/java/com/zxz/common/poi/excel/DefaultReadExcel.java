@@ -7,6 +7,7 @@ import com.zxz.common.poi.excel.convert.BaseConvert;
 import com.zxz.common.poi.excel.convert.get.ReadConverts;
 import com.zxz.common.poi.excel.read.ReadResult;
 import com.zxz.common.poi.excel.read.enums.CheckModel;
+import com.zxz.common.poi.excel.usermodel.AnnotationMeta;
 import com.zxz.common.poi.excel.usermodel.ReadStyleConfig;
 import com.zxz.common.poi.excel.util.AnnotationUtil;
 import com.zxz.common.poi.excel.util.CellUtil;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
 public class DefaultReadExcel implements ReadExcel {
     private int maxErrorWdth = 0;
 
-    private DefaultReadExcel(Builder builder) {
+     DefaultReadExcel(Builder builder) {
         checkModel = builder.checkModel;
         baseConvert = builder.baseConvert;
         if (builder.readStyleConfig != null) {
@@ -51,8 +52,8 @@ public class DefaultReadExcel implements ReadExcel {
     }
 
     private CheckModel checkModel;
-    private Map<Integer, Mapping> annotations = null;
-    private List<Mapping> conditionCheckMapping = null;
+    private Map<Integer, AnnotationMeta> annotations = null;
+    private List<AnnotationMeta> conditionCheckMapping = null;
     private BaseConvert baseConvert;
     private ReadStyleConfig readStyleConfig;
 
@@ -106,7 +107,7 @@ public class DefaultReadExcel implements ReadExcel {
     }
 
 
-    public <T> Map<Integer, Mapping> getAnnotations(Class<T> dto) {
+    public <T> Map<Integer, AnnotationMeta> getAnnotations(Class<T> dto) {
         if (annotations == null) {
             Assert.notNull(dto, "数据错误");
             annotations = CollectionUtil.toMap(AnnotationUtil.getHeadClassAnnotation(dto));
@@ -169,22 +170,22 @@ public class DefaultReadExcel implements ReadExcel {
     @Override
     public <T> List<String> checkDto(T t) {
         List<String> errorMsg = null;
-        List<Mapping> conditionCheckMapping = getConditionCheckMapping();
+        List<AnnotationMeta> conditionCheckMapping = getConditionCheckMapping();
         Class<?> dtoClass = t.getClass();
-        for (Mapping mapping : conditionCheckMapping) {
+        for (AnnotationMeta mapping : conditionCheckMapping) {
             if (dealStatus(t, mapping, dtoClass)) {
                 if (errorMsg == null) {
                     errorMsg = new ArrayList<>();
                 }
-                errorMsg.add(mapping.value() + "不能为空");
+                errorMsg.add(mapping.getValue() + "不能为空");
             }
         }
         return errorMsg;
     }
 
-    private <T> boolean dealStatus(T t, Mapping mapping, Class<?> dtoClass) {
+    private <T> boolean dealStatus(T t, AnnotationMeta mapping, Class<?> dtoClass) {
         try {
-            Object invoke = dtoClass.getMethod(mapping.getMethodName()).invoke(t);
+            Object invoke = dtoClass.getMethod(mapping.getGetMethodName()).invoke(t);
             if (invoke == null) {
                 return true;
             }
@@ -198,18 +199,18 @@ public class DefaultReadExcel implements ReadExcel {
         return false;
     }
 
-    private <T> void setDtoValue(Object cellValue, Mapping mapping, T t) {
+    private <T> void setDtoValue(Object cellValue, AnnotationMeta mapping, T t) {
         if (mapping == null) {
             return;
         }
         try {
             cellValue = dealDict(cellValue, mapping);
-            Class<?> tagetClass = t.getClass().getDeclaredField(mapping.fieldName()).getType();
-            Method method = t.getClass().getMethod(mapping.setMethodName(), tagetClass);
+            Class<?> tagetClass = t.getClass().getDeclaredField(mapping.getFieldName()).getType();
+            Method method = t.getClass().getMethod(mapping.getSetMethodName(),tagetClass);
             if (cellValue == null) {
-                if (!("").equals(mapping.defaultValue())) {
+                if (!("").equals(mapping.getDefaultValue())) {
                     method.invoke(t,
-                            baseConvert.getConvert(String.class, tagetClass).convert(mapping.defaultValue()));
+                            baseConvert.getConvert(String.class, tagetClass).convert(mapping.getDefaultValue()));
                 }
                 return;
             }
@@ -217,9 +218,9 @@ public class DefaultReadExcel implements ReadExcel {
                     cellValue.getClass().equals(ClassUtil.getPackClass(tagetClass)) ?
                             cellValue : baseConvert.getConvert(cellValue, tagetClass).convert(cellValue));
         } catch (NoSuchMethodException e) {
-            throw new BaseException("no " + mapping.setMethodName() + " method");
+            throw new BaseException("no " + mapping.getSetMethodName() + " method");
         } catch (NoSuchFieldException e) {
-            throw new BaseException("no " + mapping.fieldName() + " field");
+            throw new BaseException("no " + mapping.getFieldName() + " field");
         } catch (IllegalAccessException e) {
             throw new BaseException("invoke set method error");
         } catch (InvocationTargetException e) {
@@ -228,14 +229,14 @@ public class DefaultReadExcel implements ReadExcel {
 
     }
 
-    private Object dealDict(Object cellValue, Mapping annotation) {
+    private Object dealDict(Object cellValue, AnnotationMeta annotation) {
         if (cellValue == null) {
             return null;
         }
-        if (annotation.dict().length != 0) {
-            for (int i = 0; i < annotation.dict().length; i++) {
-                if (cellValue.equals(annotation.dict()[i])) {
-                    return i * (annotation.dictStep() + 1) + annotation.dictIndex();
+        if (annotation.getDict().length != 0) {
+            for (int i = 0; i < annotation.getDict().length; i++) {
+                if (cellValue.equals(annotation.getDict()[i])) {
+                    return i * (annotation.getDictStep() + 1) + annotation.getDictIndex();
                 }
             }
             return null;
@@ -271,10 +272,10 @@ public class DefaultReadExcel implements ReadExcel {
 
 
     @Override
-    public List<Mapping> getConditionCheckMapping() {
+    public List<AnnotationMeta> getConditionCheckMapping() {
         if (conditionCheckMapping == null) {
             conditionCheckMapping = getAnnotations(null).values().
-                    stream().filter(Mapping::notNull).collect(Collectors.toList());
+                    stream().filter(AnnotationMeta::isNotNull).collect(Collectors.toList());
         }
         return conditionCheckMapping;
     }
