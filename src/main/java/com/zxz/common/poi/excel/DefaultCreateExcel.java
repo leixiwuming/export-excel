@@ -3,19 +3,19 @@ package com.zxz.common.poi.excel;
 import com.zxz.common.exception.BaseException;
 import com.zxz.common.poi.excel.abs.CreateExcel;
 import com.zxz.common.poi.excel.abs.Sequence;
-import com.zxz.common.poi.excel.annotation.Mapping;
 import com.zxz.common.poi.excel.annotation.SequenceMapping;
-import com.zxz.common.poi.excel.convert.set.Converts;
+import com.zxz.common.poi.excel.cache.CacheData;
 import com.zxz.common.poi.excel.convert.BaseConvert;
+import com.zxz.common.poi.excel.convert.set.Converts;
 import com.zxz.common.poi.excel.exception.ExcelDtoException;
 import com.zxz.common.poi.excel.function.abs.BaseSpecialCell;
 import com.zxz.common.poi.excel.function.abs.BaseSpecialRow;
 import com.zxz.common.poi.excel.function.abs.SpecialCell;
 import com.zxz.common.poi.excel.function.abs.SpecialRow;
+import com.zxz.common.poi.excel.usermodel.AnnotationMeta;
 import com.zxz.common.poi.excel.usermodel.ExamplesModel;
 import com.zxz.common.poi.excel.usermodel.ExportStyleConfig;
 import com.zxz.common.poi.excel.usermodel.abs.ExportStyleConfigAbs;
-import com.zxz.common.poi.excel.util.AnnotationUtil;
 import com.zxz.common.poi.excel.util.GreaterMap;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddressList;
@@ -81,7 +81,15 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
     /**
      * 注解列表
      */
-    private List<Mapping> classAnnotation;
+    private List<AnnotationMeta> classAnnotation;
+
+    public void setClassAnnotation(List<AnnotationMeta> classAnnotation) {
+        this.classAnnotation = classAnnotation;
+    }
+
+    public List<AnnotationMeta> getClassAnnotation() {
+        return classAnnotation;
+    }
 
     /**
      * 序号生成
@@ -89,7 +97,7 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
     private Sequence sequence;
 
 
-    private DefaultCreateExcel(Builder builder) {
+    DefaultCreateExcel(Builder builder) {
         this.exportStyleConfigAbs = builder.exportStyleConfigAbs;
         this.setConverts(builder.BaseConvert);
         this.baseSpecialRow = builder.baseSpecialRow;
@@ -125,7 +133,7 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
     }
 
 
-    private void setColumnWidth(Sheet sheet) {
+     void setColumnWidth(Sheet sheet) {
         fieldMaxLength.forEach((k, v) -> {
             sheet.setColumnWidth(k, exportStyleConfigAbs.excelCalculationWidth().apply(v));
         });
@@ -140,7 +148,7 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
     public int createHead(Sheet sheet, Class<T> headClass, boolean isTemplate) {
         int rowIndex = 0;
         if (isNull(classAnnotation)) {
-            classAnnotation = AnnotationUtil.getHeadClassAnnotation(headClass);
+            classAnnotation = CacheData.getOrGenClassMap(headClass);
         }
         rowIndex = setSpecialRow(sheet, rowIndex, null, null);
         rowIndex = setHead(sheet, rowIndex, isTemplate, headClass);
@@ -151,7 +159,7 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
     }
 
 
-    private int setHead(Sheet sheet, int rowIndex, boolean isTemplate, Class<T> headClass) {
+    int setHead(Sheet sheet, int rowIndex, boolean isTemplate, Class<T> headClass) {
         rowIndex = setHeadRow(sheet, rowIndex, isTemplate, headClass);
         return rowIndex;
     }
@@ -191,7 +199,7 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
         defaultNotNullStyle = exportStyleConfigAbs.createNtNullCellHeadStyle(workbook);
     }
 
-    private int createDataRow(Sheet sheet, int rowIndex, T nowDto, T nextDto, List<Mapping> classAnnotation) {
+    private int createDataRow(Sheet sheet, int rowIndex, T nowDto, T nextDto, List<AnnotationMeta> classAnnotation) {
         rowIndex = setSpecialRow(sheet, rowIndex, nowDto, nextDto);
         Row row = sheet.createRow(rowIndex);
 //        setRowStyle(row);
@@ -199,7 +207,7 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
         return ++rowIndex;
     }
 
-    private int setSpecialRow(Sheet sheet, int rowIndex, T nowDto, T nextDto) {
+     int setSpecialRow(Sheet sheet, int rowIndex, T nowDto, T nextDto) {
         if (baseSpecialRow == null || baseSpecialRow.getSpecialRows() == null) {
             return rowIndex;
         }
@@ -209,7 +217,7 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
         return rowIndex;
     }
 
-    private int setSpecialCell(Row row, int cellIndex, T nowDto, T nextDto, Object value, Mapping annotation) {
+    private int setSpecialCell(Row row, int cellIndex, T nowDto, T nextDto, Object value, AnnotationMeta annotation) {
         if (baseSpecialCell == null) {
             return cellIndex;
         }
@@ -226,7 +234,7 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
         return cellIndex;
     }
 
-    private void setRowDataCell(Row row, T nowDto, T nextDto, List<Mapping> classAnnotation) {
+    private void setRowDataCell(Row row, T nowDto, T nextDto, List<AnnotationMeta> classAnnotation) {
 //        int cellIndex = cellSequence(row, dtoIndex);
         for (int i = 0; i < classAnnotation.size(); ) {
             i = setDataCell(row, i, nowDto, nextDto, classAnnotation.get(i));
@@ -258,14 +266,14 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
 //        return cellIndex;
 //    }
 
-    private int setDataCell(Row row, int cellIndex, T nowDto, T nextDto, Mapping annotation) {
+    private int setDataCell(Row row, int cellIndex, T nowDto, T nextDto, AnnotationMeta annotation) {
         Object value = null;
         try {
             if (annotation.isSequence()) {
                 value = sequence.getSequenceVal();
             } else {
                 Class dtoClass = nowDto.getClass();
-                Method method = dtoClass.getMethod(annotation.getMethodName());
+                Method method = dtoClass.getMethod(annotation.getGetMethodName());
                 value = method.invoke(nowDto);
             }
         } catch (NoSuchMethodException e) {
@@ -284,7 +292,7 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
         if (i == cellIndex) {
             setDataCellStyle(cell);
             Object convertValue = null;
-            if (annotation.dict().length != 0) {
+            if (annotation.getDict().length != 0) {
                 convertValue = dealDict(annotation, value);
             } else {
                 convertValue = getConvertValue(value);
@@ -297,23 +305,23 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
         return ++i;
     }
 
-    private void setLenth(int cellIndex, Mapping annotation, Object convertValue) {
+    private void setLenth(int cellIndex, AnnotationMeta annotation, Object convertValue) {
         int lenth = String.valueOf(convertValue).getBytes(StandardCharsets.UTF_8).length;
-        if (lenth > annotation.maxwidth() && annotation.maxwidth() != 0) {
-            lenth = annotation.maxwidth();
+        if (lenth > annotation.getMaxwidth() && annotation.getMaxwidth() != 0) {
+            lenth = annotation.getMaxwidth();
         }
-        if (lenth < annotation.minWidth() && annotation.minWidth() != 0) {
-            lenth = annotation.minWidth();
+        if (lenth < annotation.getMinWidth() && annotation.getMinWidth() != 0) {
+            lenth = annotation.getMinWidth();
         }
         fieldMaxLength.put(cellIndex, lenth);
     }
 
-    private Object dealDict(Mapping annotation, Object value) {
+    private Object dealDict(AnnotationMeta annotation, Object value) {
         if (value instanceof Integer) {
-            int index = ((int) value - annotation.dictIndex()) / (annotation.dictStep() + 1);
+            int index = ((int) value - annotation.getDictIndex()) / (annotation.getDictStep() + 1);
 
-            if (index < annotation.dict().length) {
-                value = annotation.dict()[index];
+            if (index < annotation.getDict().length) {
+                value = annotation.getDict()[index];
             }
         }
         return value;
@@ -337,8 +345,8 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
         }
         int cellIndex = 0;
         Row row = sheet.createRow(rowIndex);
-        for (Mapping annotation : classAnnotation) {
-            String name = annotation.value();
+        for (AnnotationMeta annotation : classAnnotation) {
+            String name = annotation.getValue();
             fieldMaxLength.put(cellIndex, name.getBytes(StandardCharsets.UTF_8).length);
             cellIndex = setHeadCell(row, name, cellIndex, annotation, isTemplate);
         }
@@ -349,7 +357,7 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
     }
 
     private int setExaCell(Sheet sheet, int rowIndex, Class<T> headClass) {
-        ExamplesModel exampleModel = (ExamplesModel)((ExamplesModel) getInstance(headClass)).getExamplesModel();
+        ExamplesModel exampleModel = (ExamplesModel) ((ExamplesModel) getInstance(headClass)).getExamplesModel();
         return createData(sheet, rowIndex, Arrays.asList((T) exampleModel));
     }
 
@@ -364,19 +372,19 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
     }
 
 
-    private int setHeadCell(Row row, String value, int cellIndex, Mapping annotation, boolean isTemplate) {
+    private int setHeadCell(Row row, String value, int cellIndex, AnnotationMeta annotation, boolean isTemplate) {
         Cell cell = row.createCell(cellIndex);
         cell.setCellValue(value);
-        if (annotation.textColumn()) {
+        if (annotation.isTextColumn()) {
             if (isTemplate) {
                 cell.setCellStyle(defaultHeadStyle);
                 row.getSheet().setDefaultColumnStyle(cellIndex, defaultTextStyle);
                 return ++cellIndex;
             }
         }
-        setHeadCellStyle(cell, isTemplate && annotation.notNull() ? defaultNotNullStyle : defaultHeadStyle);
-        if (annotation.dict().length != 0) {
-            setDataValidation(row, annotation.dict(), cellIndex);
+        setHeadCellStyle(cell, isTemplate && annotation.isNotNull() ? defaultNotNullStyle : defaultHeadStyle);
+        if (annotation.getDict().length != 0) {
+            setDataValidation(row, annotation.getDict(), cellIndex);
         }
         return ++cellIndex;
     }
@@ -427,7 +435,8 @@ public class DefaultCreateExcel<T> implements CreateExcel<T> {
         return isNull(baseSpecialCell) || !notEmpty(baseSpecialCell.getCellKeyPredicate());
     }
 
-    private boolean isNull(Object o) {
+    public
+    boolean isNull(Object o) {
         return o == null;
     }
 

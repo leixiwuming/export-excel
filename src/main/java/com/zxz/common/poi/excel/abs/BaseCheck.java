@@ -1,11 +1,10 @@
 package com.zxz.common.poi.excel.abs;
 
-import com.zxz.common.poi.excel.annotation.Mapping;
+import com.zxz.common.poi.excel.usermodel.AnnotationMeta;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,7 +17,7 @@ public interface BaseCheck {
      * @param row 头部行
      * @return 是否通过
      */
-    boolean check(Row row, Map<Integer, Mapping> headClassAnnotation);
+    boolean check(Row row, Map<Integer, AnnotationMeta> headClassAnnotation);
 
     default boolean checkType(Cell cell) {
         if (cell == null) {

@@ -1,7 +1,7 @@
 package com.zxz.common.poi.excel.abs;
 
-import com.zxz.common.poi.excel.annotation.Mapping;
 import com.zxz.common.poi.excel.read.ReadResult;
+import com.zxz.common.poi.excel.usermodel.AnnotationMeta;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
@@ -20,5 +20,5 @@ public interface ReadExcel {
 
     <T> List<String> checkDto(T t);
 
-    List<Mapping> getConditionCheckMapping();
+    List<AnnotationMeta> getConditionCheckMapping();
 }
