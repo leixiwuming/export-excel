@@ -1,4 +1,4 @@
-package com.zxz.common.poi.excel.read.impl;
+package com.zxz.common.excel.check;
 
 import com.zxz.common.poi.excel.abs.BaseCheck;
 import com.zxz.common.poi.excel.usermodel.AnnotationMeta;
@@ -7,6 +7,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author 24447
@@ -26,7 +27,7 @@ public class StrictCheckModel implements BaseCheck {
             return false;
         }
 
-        if (headClassAnnotation.size() != lastCellNum) {
+        if (headClassAnnotation.size() != lastCellNum ) {
             return false;
         }
         for (int i = 0; i < lastCellNum; i++) {

@@ -2,7 +2,6 @@ package com.zxz.common.poi.excel;
 
 import com.zxz.common.exception.BaseException;
 import com.zxz.common.poi.excel.abs.ReadExcel;
-import com.zxz.common.poi.excel.annotation.Mapping;
 import com.zxz.common.poi.excel.convert.BaseConvert;
 import com.zxz.common.poi.excel.convert.get.ReadConverts;
 import com.zxz.common.poi.excel.read.ReadResult;
@@ -117,8 +116,8 @@ public class DefaultReadExcel implements ReadExcel {
 
     @Override
     public <T> void readHead(Row row, Class<T> dto, int sheetIndex) {
-        boolean check = checkModel.getBaseCheck().check(row, getAnnotations(dto));
-        Assert.state(check, "第" + (sheetIndex + 1) + "页模板不匹配");
+//        boolean check = checkModel.getBaseCheck().check(row, getAnnotations(dto));
+//        Assert.state(check, "第" + (sheetIndex + 1) + "页模板不匹配");
     }
 
     @Override

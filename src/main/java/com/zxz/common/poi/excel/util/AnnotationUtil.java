@@ -1,6 +1,6 @@
 package com.zxz.common.poi.excel.util;
 
-import com.zxz.common.poi.excel.annotation.Mapping;
+import com.zxz.common.excel.annotation.Mapping;
 import com.zxz.common.poi.excel.exception.AnnotationNotExitException;
 import com.zxz.common.poi.excel.usermodel.AnnotationMeta;
 import com.zxz.common.util.Assert;

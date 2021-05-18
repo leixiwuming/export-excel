@@ -1,8 +1,7 @@
-package com.zxz.common.poi.excel.convert;
+package com.zxz.common.excel.convert;
 
+import com.zxz.common.excel.convert.set.ToNullConvert;
 import com.zxz.common.exception.BaseException;
-import com.zxz.common.poi.excel.convert.set.NullConvert;
-import com.zxz.common.poi.excel.convert.set.ToNullConvert;
 import com.zxz.common.poi.excel.util.ClassUtil;
 import com.zxz.common.util.Assert;
 import org.apache.poi.ss.usermodel.Cell;
@@ -26,14 +25,17 @@ public abstract class BaseConvert<T, R> {
         return converts;
     }
 
+    //添加转换器
     public void addConvert(Convert<T, R> convert) {
         this.converts.add(convert);
     }
 
+    //添加转换器
     public void addConvert(int index, Convert<T, R> convert) {
         this.converts.add(index, convert);
     }
 
+    //添加转换器
     public void addConvert(List<Convert<T, R>> converts) {
         if (converts == null || converts.isEmpty()) {
             return;
@@ -46,58 +48,18 @@ public abstract class BaseConvert<T, R> {
         this.convertMap = new HashMap<>();
     }
 
-    public Map<String, Convert<?, ?>> getConvertMap() {
-        return convertMap;
-    }
 
-//    public <E> void genFieldConvert(Class<E> entityClass, boolean useSequence, Sequence sequence) {
-//        Field[] declaredFields = entityClass.getDeclaredFields();
-//        if (fieldConvert == null) {
-//            if (useSequence) {
-//                fieldConvert = new HashMap<>(declaredFields.length + 1);
-//                setConvertByIntype(sequence.testVal().getClass());
-//            } else {
-//                fieldConvert = new HashMap<>(declaredFields.length);
-//            }
-//        }
-//        for (Field declaredField : declaredFields) {
-//            Class<?> type = declaredField.getType();
-//            setConvertByIntype(type);
-//        }
-//    }
-
-    private void setConvertByIntype(Class<?> type) {
-        if (type == null) {
-            convertMap.put(null, new NullConvert());
-            return;
-        }
-        for (int i = converts.size() - 1; i >= 0; i--) {
-            Convert<?, ?> convert = converts.get(i);
-            Class covertClass = (Class) ((ParameterizedType) convert.getClass().getGenericInterfaces()[0]).getActualTypeArguments()[1];
-            /* Type[] genericInterfaces = convert.getClass().getGenericInterfaces(); */
-            if (type.isPrimitive()) {
-                type = ClassUtil.getPackClass(type);
-            }
-            if (covertClass.isAssignableFrom(type)) {
-                convertMap.put(type.getSimpleName(), convert);
-                break;
-            }
-
-        }
-    }
-
-    public Convert getConvert(Class type) {
-        Convert convert = convertMap.get(type != null ? type.getSimpleName() : null);
-        if (convert == null) {
-            setConvertByIntype(type);
-            convert = convertMap.get(type != null ? type.getSimpleName() : null);
-        }
-        notNullCovEx(convert, type, String.class);
-        return convert;
-    }
-
-    public Convert getConvert(Object source, Class taget) {
-        Assert.notNull(taget, "taget must not null");
+    /**
+     * target
+     * 获取转换器
+     *
+     * @param source
+     * @param target
+     * @return
+     */
+    public Convert getConvert(Object source, Class target) {
+        Assert.notNull(target, "taget must not null");
+        //如果source为null，返回ToNullConvert
         if (source == null) {
             Convert<?, ?> convert = convertMap.get(null);
             if (convert == null) {
@@ -105,16 +67,29 @@ public abstract class BaseConvert<T, R> {
             }
             return convertMap.get(null);
         }
-        Convert convert = convertMap.get(source.getClass().getSimpleName() + "&" + taget.getSimpleName());
+        //缓存获取转换器
+        Convert convert = convertMap.get(source.getClass().getSimpleName() + "&" + target.getSimpleName());
         if (convert == null) {
-            setConvert(source, taget);
-            convert = convertMap.get(source.getClass().getSimpleName() + "&" + taget.getSimpleName());
+            //缓存不存在，通过泛型获取转换器并设置缓存
+            setConvert(source, target);
+            convert = convertMap.get(source.getClass().getSimpleName() + "&" + target.getSimpleName());
         }
-        notNullCovEx(convert, source.getClass(), taget);
+        notNullCovEx(convert, source.getClass(), target);
         return convert;
     }
 
-    void setConvert(Object source, Class taget) {
+    /**
+     * 把source转换成target类型
+     *
+     * @param source
+     * @param target
+     * @return
+     */
+    public Object getConvertValue(Object source, Class target) {
+        return getConvert(source, target).convert(source);
+    }
+
+    private Convert setConvert(Object source, Class taget) {
         Class sourceClass = null;
         Class tagetClass = null;
         for (int i = converts.size() - 1; i >= 0; i--) {
@@ -141,21 +116,15 @@ public abstract class BaseConvert<T, R> {
                 }
                 if (covertClass.isAssignableFrom(taget)) {
                     convertMap.put(source.getClass().getSimpleName() + "&" + taget.getSimpleName(), convert);
-                    break;
+                    return convert;
                 }
 
             }
-
         }
-
+        throw new BaseException(String.format(" covert [%s to %s] not find",
+                sourceClass.getSimpleName(), taget.getSimpleName()));
     }
 
-    public Object getConvertValue(Object value) {
-        if (value == null) {
-            return getConvert(null).convert(value);
-        }
-        return getConvert(value.getClass()).convert(value);
-    }
 
     private void notNullCovEx(Convert o, Class source, Class taget) {
         if (!notNull(o)) {
