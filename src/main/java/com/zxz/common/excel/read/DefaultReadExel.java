@@ -15,9 +15,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 默认读exel类
+ * @param <T>
+ */
 public abstract class DefaultReadExel<T> extends ReadExcel<T> {
     private static List EMPTY_LIST = new ArrayList(0);
+    //反射策略
     protected ReflectStrategy reflectStrategy;
+    //转换器
     private BaseConvert baseConvert = new ReadConverts();
 
     public DefaultReadExel(ReflectStrategy reflectStrategy) {
