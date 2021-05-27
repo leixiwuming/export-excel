@@ -37,4 +37,11 @@ public class StringUtils {
         }
         return new String(ch);
     }
+
+    public static String isNullReplace(String str, String replaceStr) {
+        if (isBlank(str)) {
+            return replaceStr;
+        }
+        return str;
+    }
 }

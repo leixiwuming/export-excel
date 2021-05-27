@@ -1,8 +1,14 @@
 package com.zxz.common.excel.reflect.jdk;
 
+import com.zxz.common.excel.ExcelConfig;
+import com.zxz.common.excel.annotation.AnnotationType;
+import com.zxz.common.excel.annotation.Mapping;
+import com.zxz.common.excel.annotation.adapter.AnnotationAdapter;
+import com.zxz.common.excel.model.AnnotationMeta;
 import com.zxz.common.excel.reflect.MethodParameter;
 import com.zxz.common.excel.reflect.ReflectStrategy;
 import com.zxz.common.exception.BaseException;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -27,27 +33,46 @@ public class JDKReflect implements ReflectStrategy {
         return fields;
     }
 
-    @Override
-    public <T extends Annotation> T getFieldAnnotation(Class targetClass, Class<T> annotationClass, String filedName) {
-        Field filed = getField(targetClass, filedName);
-        return filed.getAnnotation(annotationClass);
-    }
 
     @Override
-    public <T extends Annotation> List<T> getAnnotations(Class targetClass, Class<T> annotationClass) {
+    public List<AnnotationMeta> getAnnotations(Class targetClass) {
+        AnnotationAdapter annotationAdapter = getAnnotationAdapter(targetClass);
         List<Field> allField = getAllField(targetClass);
-        List<T> annotations = new ArrayList<>();
+        List<AnnotationMeta> annotations = new ArrayList<>();
         if (allField == null || allField.isEmpty()) {
             return annotations;
         }
+        Class type = getAnnotationType(targetClass);
         for (Field field : allField) {
-            T annotation = field.getAnnotation(annotationClass);
+            Annotation annotation = field.getAnnotation(type);
             if (annotation == null) {
                 continue;
             }
-            annotations.add(annotation);
+            annotations.add(annotationAdapter.getHeadAnnotation(field.getName(), annotation));
         }
         return annotations;
+    }
+
+    private AnnotationAdapter getAnnotationAdapter(Class targetClass) {
+        Class type = getAnnotationType(targetClass);
+        for (AnnotationAdapter annotationAdapter : ExcelConfig.annotationAdapters) {
+            if (annotationAdapter.supports(type)) {
+                return annotationAdapter;
+            }
+        }
+        throw new BaseException("未找到处理该注解的处理器");
+    }
+
+    @NotNull
+    private <T extends Annotation> Class<T> getAnnotationType(Class targetClass) {
+        AnnotationType typeAnnotation = (AnnotationType) targetClass.getAnnotation(AnnotationType.class);
+        Class<T> type = null;
+        if (typeAnnotation == null) {
+            type = (Class<T>) Mapping.class;
+        } else {
+            type = typeAnnotation.value();
+        }
+        return type;
     }
 
     @Override

@@ -1,14 +1,14 @@
 package com.zxz.common.excel.reflect;
 
+import com.zxz.common.excel.model.AnnotationMeta;
+
 import java.lang.annotation.Annotation;
 import java.util.List;
 
 public interface ReflectStrategy {
     List getAllField(Class targetClass);
 
-    <T extends Annotation> T getFieldAnnotation(Class targetClass, Class<T> annotationClass, String filedName);
-
-    <T extends Annotation> List<T> getAnnotations(Class targetClass, Class<T> annotationClass);
+    List<AnnotationMeta> getAnnotations(Class targetClass);
 
     Object invoke(Object instance, MethodParameter methodParameter);
 

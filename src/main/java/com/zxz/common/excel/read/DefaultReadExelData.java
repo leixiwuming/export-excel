@@ -2,7 +2,6 @@ package com.zxz.common.excel.read;
 
 import com.zxz.common.excel.ExcelConfig;
 import com.zxz.common.excel.convert.BaseConvert;
-import com.zxz.common.excel.convert.get.ReadConverts;
 import com.zxz.common.excel.model.AnnotationMeta;
 import com.zxz.common.excel.reflect.ReflectStrategy;
 import com.zxz.common.excel.reflect.SingpleMethodParameter;
@@ -17,30 +16,37 @@ import java.util.Map;
 
 /**
  * 默认读exel类
+ *
  * @param <T>
  */
-public abstract class DefaultReadExel<T> extends ReadExcel<T> {
+public abstract class DefaultReadExelData<T> extends ReadExcel<T> {
     private static List EMPTY_LIST = new ArrayList(0);
     //反射策略
     protected ReflectStrategy reflectStrategy;
     //转换器
-    private BaseConvert baseConvert = new ReadConverts();
+    private BaseConvert baseConvert;
 
-    public DefaultReadExel(ReflectStrategy reflectStrategy) {
-        this.reflectStrategy = reflectStrategy;
+    public DefaultReadExelData() {
+        this.reflectStrategy = ReadExcelConfig.getReflectStrategy();
+        this.baseConvert = ReadExcelConfig.getConvertThreadLocal();
     }
 
     protected abstract Map<Integer, AnnotationMeta> readHead(Sheet sheet, Class<T> targetClass);
 
     @Override
     protected List<T> readData(Sheet sheet, Class<T> targetClass, Map<Integer, AnnotationMeta> mapping) {
+        //获取最大行数的行标
         int lastRowNum = sheet.getLastRowNum();
+        //航标小于1，说明是个空页或者只含表头,返回空集合
         if (lastRowNum < 1) {
             return EMPTY_LIST;
         }
+        //存放每一行的数据实体
         List<T> res = new ArrayList();
+        //遍历每一行
         for (int rowIndex = 0; rowIndex <= lastRowNum; rowIndex++) {
             Row row = sheet.getRow(rowIndex);
+            //检查是否为数据行
             if (!checkIsData(row)) {
                 continue;
             }
@@ -50,10 +56,17 @@ public abstract class DefaultReadExel<T> extends ReadExcel<T> {
 
     }
 
+    /**
+     * 检查是否为数据行
+     * @see ExcelConfig 首列出现其中标识的就不是数据行
+     * @param row
+     * @return
+     */
     private boolean checkIsData(Row row) {
         if (row == null) {
             return false;
         }
+        //获取第一列的值
         Object cellValue = CellUtil.getCellValue(row.getCell(0));
         return !(ExcelConfig.EXAMPLE_TAG.equals(cellValue) || ExcelConfig.HEAD_TAG.equals(cellValue));
     }
