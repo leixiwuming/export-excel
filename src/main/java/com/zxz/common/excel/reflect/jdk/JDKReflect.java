@@ -35,7 +35,7 @@ public class JDKReflect implements ReflectStrategy {
 
 
     @Override
-    public List<AnnotationMeta> getAnnotations(Class targetClass) {
+    public List<AnnotationMeta> getAnnotationMetas(Class targetClass) {
         AnnotationAdapter annotationAdapter = getAnnotationAdapter(targetClass);
         List<Field> allField = getAllField(targetClass);
         List<AnnotationMeta> annotations = new ArrayList<>();

@@ -46,6 +46,7 @@ public abstract class ReadExcel<T> {
             Sheet sheet = workBook.getSheetAt(i);
             res.addAll(readData(sheet, targetClass, readHead(sheet, targetClass)));
         }
+        ReadExcelConfig.remove();
         return res;
     }
 

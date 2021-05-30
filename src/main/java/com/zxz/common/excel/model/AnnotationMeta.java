@@ -75,14 +75,14 @@ public class AnnotationMeta {
      */
     private String defaultValue;
 
-    private boolean isSequence;
+    private boolean sequence;
 
-    public boolean isSequence() {
-        return isSequence;
+    public boolean getSequence() {
+        return sequence;
     }
 
     public void setSequence(boolean sequence) {
-        isSequence = sequence;
+        this.sequence = sequence;
     }
 
     public String getValue() {
@@ -93,7 +93,7 @@ public class AnnotationMeta {
         this.value = value;
     }
 
-    public boolean isStatus() {
+    public boolean getStatus() {
         return status;
     }
 
@@ -149,7 +149,7 @@ public class AnnotationMeta {
         this.dictStep = dictStep;
     }
 
-    public boolean isTextColumn() {
+    public boolean getTextColumn() {
         return textColumn;
     }
 
@@ -158,7 +158,7 @@ public class AnnotationMeta {
     }
 
 
-    public boolean isNotNull() {
+    public boolean getNotNull() {
         return notNull;
     }
 

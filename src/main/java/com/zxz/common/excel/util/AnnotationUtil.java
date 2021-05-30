@@ -1,8 +1,7 @@
 package com.zxz.common.excel.util;
 
-import com.zxz.common.exception.BaseException;
 import com.zxz.common.excel.annotation.Mapping;
-import com.zxz.common.poi.excel.exception.AnnotationNotExitException;
+import com.zxz.common.exception.BaseException;
 import com.zxz.common.util.Assert;
 import com.zxz.common.util.StringUtils;
 
@@ -34,7 +33,7 @@ public interface AnnotationUtil {
             }
             headClass = headClass.getSuperclass();
         }
-        Assert.notEmpty(classMappings, new AnnotationNotExitException("未找到注解"));
+        Assert.notEmpty(classMappings, new BaseException("未找到注解"));
         classMappings.sort((o1, o2) -> o1.sort() - o2.sort());
         return classMappings;
     }

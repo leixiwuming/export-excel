@@ -1,8 +1,9 @@
 package com.zxz.common.excel.convert;
 
+import com.zxz.common.excel.convert.set.NullConvert;
 import com.zxz.common.excel.convert.set.ToNullConvert;
+import com.zxz.common.excel.util.ClassUtil;
 import com.zxz.common.exception.BaseException;
-import com.zxz.common.poi.excel.util.ClassUtil;
 import com.zxz.common.util.Assert;
 import org.apache.poi.ss.usermodel.Cell;
 
@@ -78,6 +79,16 @@ public abstract class BaseConvert<T, R> {
         return convert;
     }
 
+    public Convert getConvert(Class type) {
+        Convert convert = convertMap.get(type != null ? type.getSimpleName() : null);
+        if (convert == null) {
+            setConvert(type);
+            convert = convertMap.get(type != null ? type.getSimpleName() : null);
+        }
+        notNullCovEx(convert, type, String.class);
+        return convert;
+    }
+
     /**
      * 把source转换成target类型
      *
@@ -87,6 +98,18 @@ public abstract class BaseConvert<T, R> {
      */
     public Object getConvertValue(Object source, Class target) {
         return getConvert(source, target).convert(source);
+    }
+
+    /**
+     * 获取vlue类型的第一个转换器，并把value转换
+     * @param value
+     * @return
+     */
+    public Object getConvertValue(Object value) {
+        if (value == null) {
+            return getConvert(null).convert(value);
+        }
+        return getConvert(value.getClass()).convert(value);
     }
 
     private Convert setConvert(Object source, Class taget) {
@@ -125,6 +148,25 @@ public abstract class BaseConvert<T, R> {
                 sourceClass.getSimpleName(), taget.getSimpleName()));
     }
 
+    private void setConvert(Class<?> type) {
+        if (type == null) {
+            convertMap.put(null, new NullConvert());
+            return;
+        }
+        for (int i = converts.size() - 1; i >= 0; i--) {
+           Convert<?, ?> convert = converts.get(i);
+            Class covertClass = (Class) ((ParameterizedType) convert.getClass().getGenericInterfaces()[0]).getActualTypeArguments()[1];
+            /* Type[] genericInterfaces = convert.getClass().getGenericInterfaces(); */
+            if (type.isPrimitive()) {
+                type = ClassUtil.getPackClass(type);
+            }
+            if (covertClass.isAssignableFrom(type)) {
+                convertMap.put(type.getSimpleName(), convert);
+                break;
+            }
+
+        }
+    }
 
     private void notNullCovEx(Convert o, Class source, Class taget) {
         if (!notNull(o)) {

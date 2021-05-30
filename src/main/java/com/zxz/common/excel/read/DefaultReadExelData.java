@@ -21,15 +21,6 @@ import java.util.Map;
  */
 public abstract class DefaultReadExelData<T> extends ReadExcel<T> {
     private static List EMPTY_LIST = new ArrayList(0);
-    //反射策略
-    protected ReflectStrategy reflectStrategy;
-    //转换器
-    private BaseConvert baseConvert;
-
-    public DefaultReadExelData() {
-        this.reflectStrategy = ReadExcelConfig.getReflectStrategy();
-        this.baseConvert = ReadExcelConfig.getConvertThreadLocal();
-    }
 
     protected abstract Map<Integer, AnnotationMeta> readHead(Sheet sheet, Class<T> targetClass);
 
@@ -43,6 +34,12 @@ public abstract class DefaultReadExelData<T> extends ReadExcel<T> {
         }
         //存放每一行的数据实体
         List<T> res = new ArrayList();
+
+        //转换器
+        BaseConvert baseConvert = ReadExcelConfig.getConvertThreadLocal();
+        //反射策略
+        ReflectStrategy reflectStrategy = ReadExcelConfig.getReflectStrategy();
+
         //遍历每一行
         for (int rowIndex = 0; rowIndex <= lastRowNum; rowIndex++) {
             Row row = sheet.getRow(rowIndex);
@@ -50,7 +47,7 @@ public abstract class DefaultReadExelData<T> extends ReadExcel<T> {
             if (!checkIsData(row)) {
                 continue;
             }
-            res.add(readLine(targetClass, row, mapping));
+            res.add(readLine(targetClass, row, mapping, baseConvert, reflectStrategy));
         }
         return res;
 
@@ -58,9 +55,10 @@ public abstract class DefaultReadExelData<T> extends ReadExcel<T> {
 
     /**
      * 检查是否为数据行
-     * @see ExcelConfig 首列出现其中标识的就不是数据行
+     *
      * @param row
      * @return
+     * @see ExcelConfig 首列出现其中标识的就不是数据行
      */
     private boolean checkIsData(Row row) {
         if (row == null) {
@@ -71,19 +69,19 @@ public abstract class DefaultReadExelData<T> extends ReadExcel<T> {
         return !(ExcelConfig.EXAMPLE_TAG.equals(cellValue) || ExcelConfig.HEAD_TAG.equals(cellValue));
     }
 
-    private T readLine(Class<T> targetClass, Row row, Map<Integer, AnnotationMeta> mapping) {
+    private T readLine(Class<T> targetClass, Row row, Map<Integer, AnnotationMeta> mapping, BaseConvert baseConvert, ReflectStrategy reflectStrategy) {
         T t = reflectStrategy.newInstance(targetClass);
         mapping.forEach(
                 (k, v) -> {
                     Object cellValue = CellUtil.getCellValue(row.getCell(k));
-                    setFieldValue(cellValue, v, t, targetClass);
+                    setFieldValue(cellValue, v, t, targetClass, baseConvert, reflectStrategy);
                 }
         );
         return t;
     }
 
 
-    private void setFieldValue(Object cellValue, AnnotationMeta mapping, T t, Class<T> targetClass) {
+    private void setFieldValue(Object cellValue, AnnotationMeta mapping, T t, Class<T> targetClass, BaseConvert baseConvert, ReflectStrategy reflectStrategy) {
         if (mapping == null) {
             return;
         }

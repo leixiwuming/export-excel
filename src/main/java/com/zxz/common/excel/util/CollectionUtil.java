@@ -1,7 +1,6 @@
 package com.zxz.common.excel.util;
 
 
-import com.zxz.common.annotation.NotNull;
 import com.zxz.common.util.Assert;
 
 import java.util.*;
@@ -40,7 +39,7 @@ public class CollectionUtil {
         return (part instanceof CharSequence) ? (CharSequence) part : part.toString();
     }
 
-    public static String join(@NotNull String separator, @NotNull Iterable data) {
+    public static String join(String separator, Iterable data) {
         Assert.notNull(separator, "separator not allow null");
         Assert.notNull(data, "data not allow null");
         StringBuilder builder = new StringBuilder();
@@ -53,5 +52,13 @@ public class CollectionUtil {
             }
         }
         return builder.toString();
+    }
+
+    public static boolean isEmpty(Collection collection) {
+        return collection == null || collection.isEmpty();
+    }
+
+    public static boolean notEmpty(Collection collection) {
+        return !isEmpty(collection);
     }
 }

@@ -8,7 +8,7 @@ import java.util.List;
 public interface ReflectStrategy {
     List getAllField(Class targetClass);
 
-    List<AnnotationMeta> getAnnotations(Class targetClass);
+    List<AnnotationMeta> getAnnotationMetas(Class targetClass);
 
     Object invoke(Object instance, MethodParameter methodParameter);
 
