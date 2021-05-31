@@ -85,7 +85,6 @@ public abstract class BaseConvert<T, R> {
             setConvert(type);
             convert = convertMap.get(type != null ? type.getSimpleName() : null);
         }
-        notNullCovEx(convert, type, String.class);
         return convert;
     }
 

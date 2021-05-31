@@ -12,6 +12,7 @@ import com.zxz.common.excel.write.function.SpecialCell;
 import com.zxz.common.excel.write.function.SpecialRow;
 import com.zxz.common.util.Assert;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
@@ -25,11 +26,21 @@ import java.util.Map;
 public abstract class DefaultWriteData<T> extends WriteExcel<T> {
     @Override
     protected int writeData(Sheet sheet, int startRowIndex, Map<Integer, AnnotationMeta> map, List<T> entitys, Sequence sequence) {
-        if (CollectionUtil.notEmpty(entitys)) {
-            return startRowIndex;
-        }
         //默认数据样式
         CellStyleConfig cellStyleConfig = WriteExcelConfig.getCellStyleConfigThreadLocal();
+        CellStyle textStyle = cellStyleConfig.getTextStyle(sheet.getWorkbook());
+        CellStyle dataStyle = cellStyleConfig.getDataStyle(sheet.getWorkbook());
+        //设置每列默认样式,setDefaultColumnStyle 这个方法对创建的单元格无效，貌似官方也不会解决这个问题
+        //详见https://bz.apache.org/bugzilla/show_bug.cgi?id=51037
+        //但是为啥这串代码还在呢，它可以解决另一个问题
+        //当用户在某一列输入身份证时，excel会识别成数字，会丢失精度,这一步可以帮助用户设置单元格默认为文本格式
+        map.forEach((cellIndex, meta) -> {
+            sheet.setDefaultColumnStyle(cellIndex, meta.getTextColumn() ? textStyle : dataStyle);
+        });
+        if (CollectionUtil.isEmpty(entitys)) {
+            return startRowIndex;
+        }
+
         //获取特殊行的函数
         List<SpecialRow> specialRows = WriteExcelConfig.getSpecialRowThreadLocal();
         //获取处理特殊单元格函数
@@ -39,12 +50,6 @@ public abstract class DefaultWriteData<T> extends WriteExcel<T> {
         //转换器
         BaseConvert convert = WriteExcelConfig.getConvertThreadLocal();
         T nowEntity = null, nextEntity;
-        //设置每列默认样式
-        map.forEach((cellIndex, meta) -> {
-            sheet.setDefaultColumnStyle(cellIndex, meta.getTextColumn() ?
-                    cellStyleConfig.getTextStyle(sheet.getWorkbook()) :
-                    cellStyleConfig.getDataStyle(sheet.getWorkbook()));
-        });
         for (int i = 0; i < entitys.size(); i++) {
             if (nowEntity == null) {
                 nowEntity = entitys.get(i);
@@ -54,11 +59,11 @@ public abstract class DefaultWriteData<T> extends WriteExcel<T> {
             } else {
                 nextEntity = entitys.get(i + 1);
             }
-            nowEntity = nextEntity;
             //获取特殊行的函数
             startRowIndex = dealSpeciaRow(specialRows, sheet, startRowIndex, nowEntity, nextEntity);
             //放这么多参数是减少ThreadLocal get方法的hash计算（不确定这么搞会不会快一点≡(▔﹏▔)≡）
-            startRowIndex = writeRow(sheet, startRowIndex, nowEntity, nextEntity, map, specialCells, reflectStrategy, sequence, convert);
+            startRowIndex = writeRow(sheet, startRowIndex, nowEntity, nextEntity, map, specialCells, reflectStrategy, sequence, convert, cellStyleConfig);
+            nowEntity = nextEntity;
         }
         return startRowIndex;
     }
@@ -66,7 +71,7 @@ public abstract class DefaultWriteData<T> extends WriteExcel<T> {
     private int writeRow(Sheet sheet, int rowIndex, T nowEntity, T nextEntity,
                          Map<Integer, AnnotationMeta> map, List<SpecialCell> specialCells,
                          ReflectStrategy reflectStrategy, Sequence sequence,
-                         BaseConvert convert) {
+                         BaseConvert convert, CellStyleConfig cellStyleConfig) {
         //创建行
         Row row = sheet.createRow(rowIndex);
         //遍历映射关系，写入单元格
@@ -79,13 +84,16 @@ public abstract class DefaultWriteData<T> extends WriteExcel<T> {
                 convertValue = convert.getConvertValue(sequence.getSequenceVal());
             } else {
                 if (meta.getDict().length != 0) {
-                    convertValue = dealDict(meta, reflectStrategy.invoke(nextEntity, new SingpleMethodParameter(meta.getGetMethodName())));
+                    convertValue = dealDict(meta, reflectStrategy.invoke(nowEntity, new SingpleMethodParameter(meta.getGetMethodName())));
+                } else {
+                    convertValue = convert.getConvertValue(reflectStrategy.invoke(nowEntity, new SingpleMethodParameter(meta.getGetMethodName())));
                 }
             }
+            CellStyle cellStyle = meta.getTextColumn() ? cellStyleConfig.getTextStyle(sheet.getWorkbook()) : cellStyleConfig.getDataStyle(sheet.getWorkbook());
             if (!specialCells.isEmpty()) {
                 //执行特殊列
                 for (SpecialCell specialCell : specialCells) {
-                    if (specialCell.apply(row, cellIndex, nowEntity, nextEntity, convertValue, meta) != cellIndex) {
+                    if (specialCell.apply(row, cellIndex, nowEntity, nextEntity, convertValue, meta, cellStyle) != cellIndex) {
                         return;
                     }
                 }
@@ -93,7 +101,10 @@ public abstract class DefaultWriteData<T> extends WriteExcel<T> {
             //非特殊列导出
             Cell cell = row.createCell(cellIndex);
             setCellVal(convertValue, cell);
-            setLenth(cellIndex, meta, convertValue);
+            cell.setCellStyle(cellStyle);
+            if (convertValue != null) {
+                setLenth(cellIndex, meta, convertValue);
+            }
         });
         return ++rowIndex;
     }
@@ -111,7 +122,7 @@ public abstract class DefaultWriteData<T> extends WriteExcel<T> {
 
 
     protected Object dealDict(AnnotationMeta annotation, Object value) {
-        if (annotation.getDict().length != 0) {
+        if (annotation.getDict().length == 0) {
             return value;
         }
         if (value instanceof Integer) {

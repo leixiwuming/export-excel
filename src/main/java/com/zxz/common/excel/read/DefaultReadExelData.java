@@ -93,7 +93,8 @@ public abstract class DefaultReadExelData<T> extends ReadExcel<T> {
         //检查是否有默认值
         if (cellValue == null) {
             if (!("").equals(mapping.getDefaultValue())) {
-                singpleMethodParameter.setMethodParamValue(baseConvert.getConvertValue(mapping.getDefaultValue(), fieldType));
+                singpleMethodParameter.setMethodParamValue(mapping.getDefaultValue().getClass().equals(fieldType) ?
+                        mapping.getDefaultValue() : baseConvert.getConvertValue(mapping.getDefaultValue(), fieldType));
                 reflectStrategy.invoke(t, singpleMethodParameter);
             }
             return;

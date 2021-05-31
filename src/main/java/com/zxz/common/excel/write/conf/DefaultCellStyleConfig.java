@@ -59,7 +59,6 @@ public class DefaultCellStyleConfig extends CellStyleConfig {
         headStyle.setAlignment(horizontalalignment);
         headStyle.setVerticalAlignment(verticalalignment);
         headStyle.setWrapText(true);
-        headStyle = headStyle;
         return headStyle;
     }
 
@@ -75,9 +74,9 @@ public class DefaultCellStyleConfig extends CellStyleConfig {
             return dataStyle;
         }
         dataStyle = workbook.createCellStyle();
+        setDefaultBorder(dataStyle);
         dataStyle.setAlignment(horizontalalignment);
         dataStyle.setVerticalAlignment(verticalalignment);
-        setDefaultBorder(dataStyle);
         dataStyle.setWrapText(true);
         return dataStyle;
     }
@@ -94,6 +93,7 @@ public class DefaultCellStyleConfig extends CellStyleConfig {
             return textStyle;
         }
         textStyle = workbook.createCellStyle();
+        setDefaultBorder(textStyle);
         textStyle.setAlignment(horizontalalignment);
         textStyle.setVerticalAlignment(verticalalignment);
         DataFormat format = workbook.createDataFormat();
@@ -113,7 +113,13 @@ public class DefaultCellStyleConfig extends CellStyleConfig {
         if (notNullCellHeadStyle != null) {
             return notNullCellHeadStyle;
         }
-        notNullCellHeadStyle = getHeadStyle(workbook);
+        notNullCellHeadStyle = workbook.createCellStyle();
+        notNullCellHeadStyle.setFillForegroundColor(colorIndex);
+        notNullCellHeadStyle.setFillPattern(fillType);
+        setDefaultBorder(headStyle);
+        notNullCellHeadStyle.setAlignment(horizontalalignment);
+        notNullCellHeadStyle.setVerticalAlignment(verticalalignment);
+        notNullCellHeadStyle.setWrapText(true);
         Font font = workbook.createFont();
         font.setColor(Font.COLOR_RED);
         notNullCellHeadStyle.setFont(font);

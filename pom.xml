@@ -12,6 +12,19 @@
     <artifactId>common</artifactId>
     <version>1.1-SNAPSHOT</version>
     <dependencies>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.9.5</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
@@ -33,31 +46,20 @@
             <version>13.0</version>
             <scope>compile</scope>
         </dependency>
-         <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-core</artifactId>
-            <version>1.21</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-generator-annprocess</artifactId>
-            <version>1.21   </version>
-            <scope>provided</scope>
-        </dependency>
+<!--         <dependency>-->
+<!--            <groupId>org.openjdk.jmh</groupId>-->
+<!--            <artifactId>jmh-core</artifactId>-->
+<!--            <version>1.21</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.openjdk.jmh</groupId>-->
+<!--            <artifactId>jmh-generator-annprocess</artifactId>-->
+<!--            <version>1.21   </version>-->
+<!--            <scope>provided</scope>-->
+<!--        </dependency>-->
     </dependencies>
 
 
     <distributionManagement>
-        <!-- 管理员配置此选项 -->
-        <snapshotRepository>
-            <id>zxz-maven</id>
-            <name>snapshot</name>
-            <url>http://47.106.116.13:8083/repository/maven-snapshots/</url>
-        </snapshotRepository>
-        <repository>
-            <id>zxz-maven</id>
-            <name>releases</name>
-            <url>http://47.106.116.13:8083/repository/maven-releases/</url>
-        </repository>
     </distributionManagement>
 </project>

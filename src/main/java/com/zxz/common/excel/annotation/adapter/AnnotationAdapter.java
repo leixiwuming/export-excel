@@ -6,8 +6,8 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 
 public interface AnnotationAdapter<T extends Annotation> {
-    String GET="GET";
-    String SET="SER";
+    String GET="get";
+    String SET="set";
     boolean supports(Object o);
 
     /**

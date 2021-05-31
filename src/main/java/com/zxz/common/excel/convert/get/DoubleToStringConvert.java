@@ -9,6 +9,7 @@ public class DoubleToStringConvert implements Convert<String, Double> {
 
     @Override
     public String convert(Double aDouble) {
+
         return df.format(aDouble);
     }
 }

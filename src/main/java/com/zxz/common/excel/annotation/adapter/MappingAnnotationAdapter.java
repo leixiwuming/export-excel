@@ -7,7 +7,7 @@ import com.zxz.common.excel.util.StringUtils;
 public class MappingAnnotationAdapter implements AnnotationAdapter<Mapping> {
     @Override
     public boolean supports(Object annotationClass) {
-        return annotationClass instanceof Mapping;
+        return annotationClass.equals(Mapping.class);
     }
 
     @Override

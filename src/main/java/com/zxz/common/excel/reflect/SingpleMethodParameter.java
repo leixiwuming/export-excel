@@ -9,17 +9,17 @@ public class SingpleMethodParameter extends MethodParameter {
 
     @Override
     public String getMethodName() {
-        return null;
+        return methodName;
     }
 
     @Override
     public Class[] getMethodParamType() {
-        return new Class[0];
+        return methodParamType;
     }
 
     @Override
     public Object[] getMethodParamValue() {
-        return new Object[0];
+        return methodParamValue;
     }
 
     public void setMethodParamType(Class... methodParamType) {

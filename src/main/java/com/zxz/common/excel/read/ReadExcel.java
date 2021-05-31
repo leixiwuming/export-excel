@@ -3,9 +3,11 @@ package com.zxz.common.excel.read;
 import com.zxz.common.excel.model.AnnotationMeta;
 import com.zxz.common.excel.util.Assert;
 import com.zxz.common.excel.util.IOUtil;
+import com.zxz.common.exception.BaseException;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.ByteArrayInputStream;
@@ -51,24 +53,30 @@ public abstract class ReadExcel<T> {
     }
 
     public final Workbook getWorkBook(InputStream inputStream) {
-        byte[] bytes = null;
         try {
-            bytes = IOUtil.inputStreamToArrayByte(inputStream);
+           return WorkbookFactory.create(inputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Workbook workbook = null;
-        try {
-            workbook = new XSSFWorkbook(new ByteArrayInputStream(bytes));
-        } catch (IOException e) {
-            try {
-                workbook = new HSSFWorkbook(new ByteArrayInputStream(bytes));
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-            }
-        }
-        Assert.notNull(workbook, "读取excel错误");
-        return workbook;
+        throw new BaseException("读取excel出错");
+//        byte[] bytes = null;
+//        try {
+//            bytes = IOUtil.inputStreamToArrayByte(inputStream);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        Workbook workbook = null;
+//        try {
+//            workbook = new XSSFWorkbook(new ByteArrayInputStream(bytes));
+//        } catch (IOException e) {
+//            try {
+//                workbook = new HSSFWorkbook(new ByteArrayInputStream(bytes));
+//            } catch (IOException ioException) {
+//                ioException.printStackTrace();
+//            }
+//        }
+//        Assert.notNull(workbook, "读取excel错误");
+//        return workbook;
     }
 
 }

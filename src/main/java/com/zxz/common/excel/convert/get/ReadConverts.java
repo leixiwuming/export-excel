@@ -18,5 +18,7 @@ public class ReadConverts<T, R> extends BaseConvert<T, R> {
         converts.add(new DoubleToStringConvert());
         converts.add(new BooleanToIntegerConvert());
         converts.add(new DoubleToLongConvert());
+        converts.add(new StringToBigDecimalConvert());
+        converts.add(new StringToBooleanConvert());
     }
 }

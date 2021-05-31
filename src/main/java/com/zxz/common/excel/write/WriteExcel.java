@@ -1,7 +1,6 @@
 package com.zxz.common.excel.write;
 
 import com.zxz.common.excel.model.AnnotationMeta;
-import com.zxz.common.excel.reflect.ReflectStrategy;
 import com.zxz.common.excel.util.Assert;
 import com.zxz.common.excel.util.CollectionUtil;
 import com.zxz.common.excel.util.StringUtils;
@@ -12,8 +11,9 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public abstract class WriteExcel<T> {
 
@@ -21,40 +21,11 @@ public abstract class WriteExcel<T> {
     protected abstract int writeTemplate(Sheet sheet, int startRowIndex, Class<T> entity);
 
     //写入头部
-    protected abstract int writeHead(Sheet sheet, int startRowIndex, Class<T> entity);
+    protected abstract ReadHeadResult writeHead(Sheet sheet, int startRowIndex, Class<T> entity, Boolean useSequence);
 
     //写入数据
     protected abstract int writeData(Sheet sheet, int startRowIndex, Map<Integer, AnnotationMeta> metaMap, List<T> entitys, Sequence sequence);
 
-
-    //生成映射关系 useSequence 开始列添加序列标识
-    protected Map<Integer, AnnotationMeta> getMaping(Class<T> entityClass, boolean useSequence) {
-        Map<Integer, AnnotationMeta> res = new HashMap<>();
-        Assert.notNull(entityClass, "导出对象不能为null");
-        //获取策略
-        ReflectStrategy reflectStrategy = WriteExcelConfig.getReflectStrategy();
-        //获取AnnotationMeta
-        List<AnnotationMeta> annotations = reflectStrategy.getAnnotationMetas(entityClass);
-        Assert.notEmpty(annotations, "未找到导出对象里的注解信息");
-        //按照sort排序
-        annotations = annotations.stream().filter(AnnotationMeta::getStatus).sorted(Comparator.comparingInt(AnnotationMeta::getSort)).collect(Collectors.toList());
-        //判断是否添加序号
-        if (useSequence) {
-            //序号AnnotationMeta，添加到首位
-            AnnotationMeta annotationMeta = new AnnotationMeta();
-            annotationMeta.setStatus(true);
-            annotationMeta.setValue("序号");
-            annotationMeta.setSequence(true);
-            annotations.add(0, annotationMeta);
-        }
-        //标头开始列索引为1，0索引存放标识
-        int startCellIndex = 1;
-        for (AnnotationMeta annotation : annotations) {
-            res.put(startCellIndex, annotation);
-            ++startCellIndex;
-        }
-        return res;
-    }
 
     protected void setDataValidation(Sheet sheet, String[] dict, int cellIndex, int startRowIndex, int endRowNum) {
         DataValidationHelper validationHelper = sheet.getDataValidationHelper();
@@ -171,15 +142,16 @@ public abstract class WriteExcel<T> {
 
     private Sheet wirteSheet(String sheetName, List<T> entitys, Class<T> entityClass, Workbook workbook, Sequence sequence) {
         Sheet sheet = workbook.createSheet(sheetName);
-        int endHeadIndex = writeHead(sheet, 0, entityClass);
-        Map<Integer, AnnotationMeta> metaMap = getMaping(entityClass, sequence == null ? false : true);
-        int endDataIndex = writeData(sheet, endHeadIndex, metaMap, entitys, sequence);
+        boolean useSequence = sequence == null ? false : true;
+        ReadHeadResult result = writeHead(sheet, 0, entityClass, useSequence);
+        int endHeadIndex = result.getNextEndHeadRowIndex();
+        int endDataIndex = writeData(sheet, endHeadIndex, result.getMetaMap(), entitys, sequence);
         setColumnWidth(sheet);
         WriteExcelConfig.removeCellWidth();
         if (endDataIndex != endHeadIndex) {
-            metaMap.forEach(
+            result.getMetaMap().forEach(
                     (cellIndex, meta) -> {
-                        if (meta.getDict().length != 0) {
+                        if (meta.getDict() != null && 0 != meta.getDict().length) {
                             setDataValidation(sheet, meta.getDict(), cellIndex, endHeadIndex, endDataIndex);
                         }
                     }
