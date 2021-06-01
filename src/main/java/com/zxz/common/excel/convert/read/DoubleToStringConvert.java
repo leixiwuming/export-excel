@@ -1,10 +1,10 @@
-package com.zxz.common.excel.convert.get;
+package com.zxz.common.excel.convert.read;
 
 import com.zxz.common.excel.convert.Convert;
 
 import java.text.DecimalFormat;
 
-public class DoubleToStringConvert implements Convert<String, Double> {
+public class DoubleToStringConvert implements Convert<Double,String> {
     DecimalFormat df = new DecimalFormat("##########.##########");
 
     @Override

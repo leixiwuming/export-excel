@@ -1,4 +1,4 @@
-package com.zxz.common.excel.convert.get;
+package com.zxz.common.excel.convert.read;
 
 import com.zxz.common.excel.convert.Convert;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -6,7 +6,7 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import java.time.LocalDate;
 import java.util.TimeZone;
 
-public class DoubleToLocalDateConvert implements Convert<LocalDate, Double> {
+public class DoubleToLocalDateConvert implements Convert<Double,LocalDate> {
 
 
     @Override

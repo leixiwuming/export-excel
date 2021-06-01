@@ -1,5 +1,6 @@
 package com.zxz.common.excel.reflect.jdk;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.zxz.common.excel.ExcelConfig;
 import com.zxz.common.excel.annotation.AnnotationType;
 import com.zxz.common.excel.annotation.Mapping;
@@ -11,12 +12,11 @@ import com.zxz.common.exception.BaseException;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
 
 public class JDKReflect implements ReflectStrategy {
+
     private Map<Class, Map<String, Field>> fieldCache;
 
     public JDKReflect() {
@@ -105,6 +105,36 @@ public class JDKReflect implements ReflectStrategy {
     @Override
     public Class getFieldType(Class targetClass, String fieldName) {
         return getField(targetClass, fieldName).getType();
+    }
+
+    /**
+     * 获取目标类超类接口的泛型
+     *
+     * @param tagertClass
+     * @return
+     */
+    @Override
+    public List<Class> getInterfaceGeneric(Class tagertClass) {
+        Type genericInterface = tagertClass.getGenericInterfaces()[0];
+        if (genericInterface instanceof ParameterizedType) {
+            return Arrays.asList((Class[]) ((ParameterizedType) genericInterface).getActualTypeArguments());
+        }
+        return null;
+    }
+
+    /**
+     * 获取目标类父类的泛型
+     *
+     * @param tagertClass
+     * @return
+     */
+    @Override
+    public List<Class> getSuperclassGeneric(Class tagertClass) {
+        Type genericSuperclass = tagertClass.getGenericSuperclass();
+        if (genericSuperclass instanceof ParameterizedType) {
+            return Arrays.asList((Class[]) ((ParameterizedType) genericSuperclass).getActualTypeArguments());
+        }
+        return null;
     }
 
     private Field getField(Class targetClass, String filedName) {

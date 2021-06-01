@@ -1,7 +1,7 @@
 package com.zxz.common.excel.read;
 
 import com.zxz.common.excel.convert.BaseConvert;
-import com.zxz.common.excel.convert.get.ReadConverts;
+import com.zxz.common.excel.convert.read.ReadConvert;
 import com.zxz.common.excel.reflect.ReflectStrategy;
 import com.zxz.common.excel.reflect.jdk.JDKReflect;
 import com.zxz.common.excel.util.InitThreadLocal;
@@ -19,7 +19,7 @@ public class ReadExcelConfig {
     }
 
     //转换器
-    private static ThreadLocal<BaseConvert> convertThreadLocal = new InitThreadLocal<>(new ReadConverts());
+    private static ThreadLocal<BaseConvert> convertThreadLocal = new InitThreadLocal<>(new ReadConvert());
 
     public static void setConvertThreadLocal(BaseConvert baseConvert) {
         convertThreadLocal.set(baseConvert);

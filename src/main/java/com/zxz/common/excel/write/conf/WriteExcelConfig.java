@@ -1,7 +1,7 @@
 package com.zxz.common.excel.write.conf;
 
 import com.zxz.common.excel.convert.BaseConvert;
-import com.zxz.common.excel.convert.set.WriteConverts;
+import com.zxz.common.excel.convert.write.WriteConvert;
 import com.zxz.common.excel.reflect.ReflectStrategy;
 import com.zxz.common.excel.reflect.jdk.JDKReflect;
 import com.zxz.common.excel.util.GreaterMap;
@@ -31,7 +31,7 @@ public class WriteExcelConfig {
 
 
     //转换器
-    private static ThreadLocal<BaseConvert> convertThreadLocal = new InitThreadLocal<>(new WriteConverts());
+    private static ThreadLocal<BaseConvert> convertThreadLocal = new InitThreadLocal<>(new WriteConvert());
 
     public static void setConvertThreadLocal(BaseConvert baseConvert) {
         convertThreadLocal.set(baseConvert);

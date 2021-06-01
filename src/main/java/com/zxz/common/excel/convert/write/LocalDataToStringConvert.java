@@ -1,15 +1,15 @@
-package com.zxz.common.excel.convert.get;
+package com.zxz.common.excel.convert.write;
 
 import com.zxz.common.excel.convert.Convert;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-public class StringToLocalDateConvert implements Convert<LocalDate, String> {
+public class LocalDataToStringConvert implements Convert<LocalDate,String> {
     private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
-    public LocalDate convert(String s) {
-        return LocalDate.parse(s, formatter);
+    public String convert(LocalDate localDate) {
+        return formatter.format(localDate);
     }
 }

@@ -1,13 +1,15 @@
-package com.zxz.common.excel.convert.get;
+package com.zxz.common.excel.convert.read;
 
 import com.zxz.common.excel.convert.BaseConvert;
 import com.zxz.common.excel.convert.Convert;
+import com.zxz.common.excel.read.ReadExcelConfig;
 
 import java.util.List;
 
-public class ReadConverts<T, R> extends BaseConvert<T, R> {
-    public ReadConverts() {
-        List<Convert<?, ?>> converts = getConverts();
+public class ReadConvert extends BaseConvert {
+    public ReadConvert() {
+        super(ReadExcelConfig.getReflectStrategy());
+        List<Convert> converts = getConverts();
         converts.add(new StringToLocalDateConvert());
         converts.add(new StringToLocalDateTimeConvert());
         converts.add(new StringToDoubleConvert());
@@ -20,5 +22,15 @@ public class ReadConverts<T, R> extends BaseConvert<T, R> {
         converts.add(new DoubleToLongConvert());
         converts.add(new StringToBigDecimalConvert());
         converts.add(new StringToBooleanConvert());
+    }
+
+    /**
+     * 待转换的值为null的转换器
+     *
+     * @return
+     */
+    @Override
+    protected Convert getNullConvert() {
+        return null;
     }
 }

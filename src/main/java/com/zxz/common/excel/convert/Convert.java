@@ -1,5 +1,10 @@
 package com.zxz.common.excel.convert;
 
-public interface Convert<T,R> {
-    T convert(R r);
+@FunctionalInterface
+public interface Convert<T, R> {
+    R convert(T r);
+
+    static Convert emptyConvert() {
+        return s -> s;
+    }
 }
