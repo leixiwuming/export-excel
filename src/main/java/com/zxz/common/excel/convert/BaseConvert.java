@@ -97,54 +97,55 @@ public abstract class BaseConvert {
     private Convert getConvert(Object source, Class target) {
         Assert.notNull(target, "taget must not null");
         //如果原类型的值为null
-        if (source == null) {
-            //查看缓存中有没有null的转换器
-            Convert convert = convertCache.get(source);
-            if (convert == null) {
-                //获取null转换器,如果没设置，默认为emptyConvert
-                Convert dealNullConvert = getNullConvert() == null ? Convert.emptyConvert() : getNullConvert();
-                convertCache.put(null, dealNullConvert);
+        if (source != null) {
+            //先获取缓存里的转换器
+            Class sourceClass = source.getClass();
+            Convert convert = convertCache.get(sourceClass.getSimpleName() + "&" + target.getSimpleName());
+            if (convert != null) {
                 return convert;
             }
-            return convert;
-        }
-        //先获取缓存里的转换器
-        Class sourceClass = source.getClass();
-        Convert convert = convertCache.get(sourceClass.getSimpleName() + "&" + target.getSimpleName());
-        if (convert != null) {
-            return convert;
-        }
-        //缓存不存在
-        //如果原类型值和目标类型一致，不做处理,如果时基础数据类型就转换成包装类型
-        Class targetTmpClass = ClassUtil.getPackClass(target.getClass());
+            //缓存不存在
+            //如果原类型值和目标类型一致，不做处理,如果时基础数据类型就转换成包装类型
+            Class targetTmpClass = ClassUtil.getPackClass(target.getClass());
 
-        if (sourceClass.equals(targetTmpClass)) {
-            convertCache.put(source.getClass().getSimpleName() + "&" + target.getSimpleName(), Convert.emptyConvert());
-            return Convert.emptyConvert();
-        }
-        List<Convert> converts = getConverts();
-
-        //遍历转换器，找到目标转换器
-        for (int i = converts.size() - 1; i >= 0; i--) {
-            convert = converts.get(i);
-            //获取接口泛型列表
-            List<Class> genericClasses = reflectStrategy.getInterfaceGeneric(convert.getClass());
-            if (genericClasses == null && genericClasses.size() != 2) {
-                continue;
+            if (sourceClass.equals(targetTmpClass)) {
+                convertCache.put(source.getClass().getSimpleName() + "&" + target.getSimpleName(), Convert.emptyConvert());
+                return Convert.emptyConvert();
             }
-            //转换器可以转换的类型如果是souce的超类
-            if (genericClasses.get(0).isAssignableFrom(sourceClass)) {
-                //转换器转换后的类型如果是tagert的超类，说明这个转换器支持这个转换工作
-                if (genericClasses.get(1).isAssignableFrom(targetTmpClass)) {
-                    convertCache.put(source.getClass().getSimpleName() + "&" + target.getSimpleName(), convert);
-                    return convert;
+            List<Convert> converts = getConverts();
+
+            //遍历转换器，找到目标转换器
+            for (int i = converts.size() - 1; i >= 0; i--) {
+                convert = converts.get(i);
+                //获取接口泛型列表
+                List<Class> genericClasses = reflectStrategy.getInterfaceGeneric(convert.getClass());
+                if (genericClasses == null && genericClasses.size() != 2) {
+                    continue;
                 }
-            }
+                //转换器可以转换的类型如果是source的超类
+                if (genericClasses.get(0).isAssignableFrom(sourceClass)) {
+                    //转换器转换后的类型如果是target的超类，说明这个转换器支持这个转换工作
+                    if (genericClasses.get(1).isAssignableFrom(targetTmpClass)) {
+                        convertCache.put(source.getClass().getSimpleName() + "&" + target.getSimpleName(), convert);
+                        return convert;
+                    }
+                }
 
+            }
+            //未找到转换器错误
+            throw new BaseException(String.format(" covert [%s to %s] not find",
+                    source.getClass().getSimpleName(), target.getSimpleName()));
+        } else {
+            //查看缓存中有没有null的转换器
+            Convert convert = convertCache.get(null);
+            if (convert == null) {
+                //获取null转换器,如果没设置，默认为emptyConvert
+                convert = getNullConvert() == null ? Convert.emptyConvert() : getNullConvert();
+                convertCache.put(null, convert);
+            }
+            return convert;
         }
-        //未找到转换器错误
-        throw new BaseException(String.format(" covert [%s to %s] not find",
-                source.getClass().getSimpleName(), target.getSimpleName()));
+
     }
 
 
@@ -155,39 +156,41 @@ public abstract class BaseConvert {
      * @return
      */
     public Convert getConvert(Object source) {
-        if (source == null) {
+        if (source != null) {
+            //先获取缓存里的转换器
+            Convert convert = convertCache.get(source.getClass().getSimpleName());
+            if (convert != null) {
+                return convert;
+            }
+            //缓存不存在，遍历转换器
+            for (int i = converts.size() - 1; i >= 0; i--) {
+                convert = converts.get(i);
+                //获取接口泛型列表
+                List<Class> genericClasses = reflectStrategy.getInterfaceGeneric(convert.getClass());
+                if (genericClasses == null && !genericClasses.isEmpty()) {
+                    continue;
+                }
+                //转换器可以转换的类型如果是source的超类
+                if (genericClasses.get(0).isAssignableFrom(source.getClass())) {
+                    return convert;
+                }
+            }
+            //未找到转换器错误
+            throw new BaseException(String.format(" covert [%s] not find",
+                    source.getClass().getSimpleName()));
+
+        } else {
             //查看缓存中有没有null的转换器
             Convert convert = convertCache.get(source);
             if (convert == null) {
                 //获取null转换器,如果没设置，默认为emptyConvert
-                Convert dealNullConvert = getNullConvert() == null ? Convert.emptyConvert() : getNullConvert();
-                convertCache.put(null, dealNullConvert);
-                return convert;
+                convert = getNullConvert() == null ? Convert.emptyConvert() : getNullConvert();
+                convertCache.put(null, convert);
+
             }
             return convert;
         }
-        //先获取缓存里的转换器
-        Convert convert = convertCache.get(source.getClass().getSimpleName());
-        if (convert != null) {
-            return convert;
-        }
-        //缓存不存在，遍历转换器
-        for (int i = converts.size() - 1; i >= 0; i--) {
-            convert = converts.get(i);
-            //获取接口泛型列表
-            List<Class> genericClasses = reflectStrategy.getInterfaceGeneric(convert.getClass());
-            if (genericClasses == null && !genericClasses.isEmpty()) {
-                continue;
-            }
-            //转换器可以转换的类型如果是souce的超类
-            if (genericClasses.get(0).isAssignableFrom(source.getClass())) {
-                //转换器转换后的类型如果是tagert的超类，说明这个转换器支持这个转换工作
-                return convert;
-            }
-        }
-        //未找到转换器错误
-        throw new BaseException(String.format(" covert [%s] not find",
-                source.getClass().getSimpleName()));
+
 
     }
 

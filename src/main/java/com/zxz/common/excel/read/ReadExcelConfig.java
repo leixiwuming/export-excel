@@ -30,6 +30,18 @@ public class ReadExcelConfig {
         return convertThreadLocal.get();
     }
 
+
+//    //缓存实现
+//    private static ThreadLocal<ComCache> cacheThreadLocal = new InitThreadLocal<>(CaffeineCache.getInstance());
+//
+//    public static void setCacheThreadLocal(ComCache comCache) {
+//        cacheThreadLocal.set(comCache);
+//    }
+//
+//    public static ComCache getCacheThreadLocal() {
+//        return cacheThreadLocal.get();
+//    }
+
     //检查规则
 //    private static ThreadLocal<BaseCheck> checkThreadLocal = new InitThreadLocal(new NormalCheckModel());
 //
@@ -44,6 +56,7 @@ public class ReadExcelConfig {
     public static void remove() {
         reflectStrategyThreadLocal.remove();
         convertThreadLocal.remove();
+//        cacheThreadLocal.remove();
 //        checkThreadLocal.remove();
     }
 

@@ -1,10 +1,11 @@
 package com.zxz.common.excel.reflect.jdk;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.zxz.common.excel.ExcelConfig;
 import com.zxz.common.excel.annotation.AnnotationType;
 import com.zxz.common.excel.annotation.Mapping;
 import com.zxz.common.excel.annotation.adapter.AnnotationAdapter;
+import com.zxz.common.excel.cache.CaffeineCache;
+import com.zxz.common.excel.cache.ComCache;
 import com.zxz.common.excel.model.AnnotationMeta;
 import com.zxz.common.excel.reflect.MethodParameter;
 import com.zxz.common.excel.reflect.ReflectStrategy;
@@ -13,34 +14,49 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class JDKReflect implements ReflectStrategy {
-
-    private Map<Class, Map<String, Field>> fieldCache;
+    private static final String JDKREFLECT_SPACE = "JDKReflect";
+    private ComCache comCache;
 
     public JDKReflect() {
-        fieldCache = new HashMap<>();
+        this.comCache = CaffeineCache.getInstance();
+    }
+
+    public void setComCache(ComCache comCache) {
+        this.comCache = comCache;
     }
 
     @Override
     public List<Field> getAllField(Class targetClass) {
-        List<Field> fields = new ArrayList<>();
+        String s = "field" + targetClass.getName();
+        List<Field> fields = (List<Field>) comCache.get(JDKREFLECT_SPACE, s);
+        if (fields != null) {
+            return fields;
+        }
         while (!targetClass.equals(Object.class)) {
             fields.addAll(Arrays.asList(targetClass.getDeclaredFields()));
             targetClass = targetClass.getSuperclass();
         }
+        comCache.put(JDKREFLECT_SPACE, s, fields);
         return fields;
     }
 
 
     @Override
     public List<AnnotationMeta> getAnnotationMetas(Class targetClass) {
+        String s = "meta" + targetClass.getName();
+        List<AnnotationMeta> annotations = (List<AnnotationMeta>) comCache.get(JDKREFLECT_SPACE, s);
+        if (annotations != null) {
+            return annotations;
+        }
         AnnotationAdapter annotationAdapter = getAnnotationAdapter(targetClass);
         List<Field> allField = getAllField(targetClass);
-        List<AnnotationMeta> annotations = new ArrayList<>();
         if (allField == null || allField.isEmpty()) {
-            return annotations;
+            return new ArrayList<>();
         }
         Class type = getAnnotationType(targetClass);
         for (Field field : allField) {
@@ -50,6 +66,7 @@ public class JDKReflect implements ReflectStrategy {
             }
             annotations.add(annotationAdapter.getHeadAnnotation(field.getName(), annotation));
         }
+        comCache.put(JDKREFLECT_SPACE, s, annotations);
         return annotations;
     }
 
@@ -65,13 +82,18 @@ public class JDKReflect implements ReflectStrategy {
 
     @NotNull
     private <T extends Annotation> Class<T> getAnnotationType(Class targetClass) {
+        String s = "type" + targetClass.getName();
+        Class<T> type = (Class<T>) comCache.get(JDKREFLECT_SPACE, s);
+        if (type != null) {
+            return type;
+        }
         AnnotationType typeAnnotation = (AnnotationType) targetClass.getAnnotation(AnnotationType.class);
-        Class<T> type = null;
         if (typeAnnotation == null) {
             type = (Class<T>) Mapping.class;
         } else {
             type = typeAnnotation.value();
         }
+        comCache.put(JDKREFLECT_SPACE, s, type);
         return type;
     }
 
@@ -104,58 +126,68 @@ public class JDKReflect implements ReflectStrategy {
 
     @Override
     public Class getFieldType(Class targetClass, String fieldName) {
-        return getField(targetClass, fieldName).getType();
+        String s = "fileType" + targetClass.getName() + fieldName;
+        Class typeClass = (Class) comCache.get(JDKREFLECT_SPACE, s);
+        if (typeClass != null) {
+            return typeClass;
+        }
+        typeClass = getField(targetClass, fieldName).getType();
+        comCache.put(JDKREFLECT_SPACE, s, typeClass);
+        return typeClass;
     }
 
     /**
      * 获取目标类超类接口的泛型
      *
-     * @param tagertClass
+     * @param targetClass
      * @return
      */
     @Override
-    public List<Class> getInterfaceGeneric(Class tagertClass) {
-        Type genericInterface = tagertClass.getGenericInterfaces()[0];
-        if (genericInterface instanceof ParameterizedType) {
-            return Arrays.asList((Class[]) ((ParameterizedType) genericInterface).getActualTypeArguments());
+    public List<Class> getInterfaceGeneric(Class targetClass) {
+        String s = "interfaceGeneric" + targetClass.getName();
+        List<Class> list = (List<Class>) comCache.get(JDKREFLECT_SPACE, s);
+        if (list != null) {
+            return list;
         }
-        return null;
+        Type genericInterface = targetClass.getGenericInterfaces()[0];
+        if (genericInterface instanceof ParameterizedType) {
+            list = Arrays.asList((Class[]) ((ParameterizedType) genericInterface).getActualTypeArguments());
+            comCache.put(JDKREFLECT_SPACE, s, list);
+            return list;
+        }
+        return new ArrayList<>();
     }
 
     /**
      * 获取目标类父类的泛型
      *
-     * @param tagertClass
+     * @param targetClass
      * @return
      */
     @Override
-    public List<Class> getSuperclassGeneric(Class tagertClass) {
-        Type genericSuperclass = tagertClass.getGenericSuperclass();
-        if (genericSuperclass instanceof ParameterizedType) {
-            return Arrays.asList((Class[]) ((ParameterizedType) genericSuperclass).getActualTypeArguments());
+    public List<Class> getSuperclassGeneric(Class targetClass) {
+        String s = "superclassGeneric" + targetClass.getName();
+        List<Class> list = (List<Class>) comCache.get(JDKREFLECT_SPACE, s);
+        if (list != null) {
+            return list;
         }
-        return null;
+        Type genericSuperclass = targetClass.getGenericSuperclass();
+        if (genericSuperclass instanceof ParameterizedType) {
+            list = Arrays.asList((Class[]) ((ParameterizedType) genericSuperclass).getActualTypeArguments());
+            comCache.put(JDKREFLECT_SPACE, s, list);
+            return list;
+        }
+        return new ArrayList<>();
     }
 
     private Field getField(Class targetClass, String filedName) {
-        //缓存处理
-        Map<String, Field> fieldMap = fieldCache.get(targetClass);
-        if (fieldMap == null) {
-            fieldMap = new HashMap<>();
-            fieldCache.put(targetClass, fieldMap);
-        }
         Field field = null;
-        //如果缓存存在属性，直接返回
-        if ((field = fieldMap.get(filedName)) != null) {
-            return field;
-        }
         try {
             //反射获取属性
             field = targetClass.getDeclaredField(filedName);
         } catch (NoSuchFieldException e) {
             throw new BaseException("未找到该属性： " + filedName);
         }
-        fieldMap.put(filedName, field);
         return field;
     }
 }

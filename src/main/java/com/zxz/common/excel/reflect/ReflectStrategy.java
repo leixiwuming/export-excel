@@ -51,18 +51,18 @@ public interface ReflectStrategy {
     /**
      * 获取目标类超类接口的泛型
      *
-     * @param tagertClass
+     * @param targetClass
      * @return
      */
-    List<Class> getInterfaceGeneric(Class tagertClass);
+    List<Class> getInterfaceGeneric(Class targetClass);
 
 
     /**
      * 获取目标类父类的泛型
      *
-     * @param tagertClass
+     * @param targetClass
      * @return
      */
-    List<Class> getSuperclassGeneric(Class tagertClass);
+    List<Class> getSuperclassGeneric(Class targetClass);
 
 }

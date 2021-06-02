@@ -23,7 +23,7 @@ public class CaffeineCache<K, V> extends ComCache<K, V> {
     }
 
     @Override
-    public V get(Object space, K key) {
+    public V get(String space, K key) {
         Cache cache = spaceCache.get(space);
         if (cache == null) {
             cache = build();
@@ -34,18 +34,17 @@ public class CaffeineCache<K, V> extends ComCache<K, V> {
     }
 
     @Override
-    public V get(Object space, K key, Function function) {
+    public V get(String space, K key,Function<K,Object> function) {
         Cache cache = spaceCache.get(space);
         if (cache == null) {
             cache = build();
             spaceCache.put(space, cache);
-            return null;
         }
         return (V) cache.get(key, function);
     }
 
     @Override
-    public void put(Object space, K key, V val) {
+    public void put(String space, K key, V val) {
         Cache cache = spaceCache.get(space);
         if (cache == null) {
             cache = build();

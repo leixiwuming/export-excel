@@ -1,5 +1,7 @@
 package com.zxz.common.excel.write.conf;
 
+import com.zxz.common.excel.cache.CaffeineCache;
+import com.zxz.common.excel.cache.ComCache;
 import com.zxz.common.excel.convert.BaseConvert;
 import com.zxz.common.excel.convert.write.WriteConvert;
 import com.zxz.common.excel.reflect.ReflectStrategy;
@@ -40,6 +42,18 @@ public class WriteExcelConfig {
     public static BaseConvert getConvertThreadLocal() {
         return convertThreadLocal.get();
     }
+
+
+//    //缓存实现
+//    private static ThreadLocal<ComCache> cacheThreadLocal = new InitThreadLocal<>(CaffeineCache.getInstance());
+//
+//    public static void setCacheThreadLocal(ComCache comCache) {
+//        cacheThreadLocal.set(comCache);
+//    }
+//
+//    public static ComCache getCacheThreadLocal() {
+//        return cacheThreadLocal.get();
+//    }
 
 
     //一些默认样式
@@ -107,7 +121,10 @@ public class WriteExcelConfig {
         cellMaxWidthThreadLocal.remove();
         convertThreadLocal.remove();
         cellStyleConfigThreadLocal.remove();
+//        cacheThreadLocal.remove();
+        cellMaxWidthThreadLocal.remove();
     }
+
     public static void removeCellWidth() {
         cellMaxWidthThreadLocal.remove();
     }
