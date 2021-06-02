@@ -13,7 +13,6 @@ public class WriteConvert extends BaseConvert {
     public WriteConvert() {
         super(WriteExcelConfig.getReflectStrategy());
         List<Convert> converts = getConverts();
-        converts.add(new NullConvert());
 //        converts.add(new ObjectToStringConvert());
         converts.add(new LocalDataToStringConvert());
         converts.add(new LocalDataTimeToStringConvert());

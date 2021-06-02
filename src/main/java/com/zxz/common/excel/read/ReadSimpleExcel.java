@@ -1,6 +1,8 @@
 package com.zxz.common.excel.read;
 
 import com.zxz.common.excel.ExcelConfig;
+import com.zxz.common.excel.cache.CaffeineCache;
+import com.zxz.common.excel.cache.ComCache;
 import com.zxz.common.excel.model.AnnotationMeta;
 import com.zxz.common.excel.util.CellUtil;
 import org.apache.poi.ss.usermodel.Row;
@@ -11,10 +13,11 @@ import java.util.List;
 import java.util.Map;
 
 public class ReadSimpleExcel<T> extends DefaultReadExelData<T> {
-    private Map<Class, Map<Integer, AnnotationMeta>> classAnnotationMetaCache;
+    private static final String READSPACE = "simpleRead$";
+    private ComCache comCache;
 
     public ReadSimpleExcel() {
-        classAnnotationMetaCache = new HashMap<>();
+        comCache = CaffeineCache.getInstance();
     }
 
     /**
@@ -26,27 +29,23 @@ public class ReadSimpleExcel<T> extends DefaultReadExelData<T> {
      */
     @Override
     protected Map<Integer, AnnotationMeta> readHead(Sheet sheet, Class<T> targetClass) {
-        Map<Integer, AnnotationMeta> mapping = classAnnotationMetaCache.get(targetClass);
-        if (mapping != null) {
-            return mapping;
-        }
-        //获取最后一行的下标
-        int lastRowNum = sheet.getLastRowNum();
-        //遍历行
-        for (int i = 0; i <= lastRowNum; i++) {
-            Row row = sheet.getRow(i);
-            if (row == null) {
-                continue;
+        return (Map<Integer, AnnotationMeta>) comCache.get(READSPACE, targetClass, s -> {
+            //获取最后一行的下标
+            int lastRowNum = sheet.getLastRowNum();
+            //遍历行
+            for (int i = 0; i <= lastRowNum; i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) {
+                    continue;
+                }
+                //读取第一列标记列的值
+                Object cellValue = CellUtil.getCellValue(row.getCell(0));
+                if (ExcelConfig.HEAD_TAG.equals(cellValue)) {
+                    return readHeadRow(row, targetClass);
+                }
             }
-            //读取第一列标记列的值
-            Object cellValue = CellUtil.getCellValue(row.getCell(0));
-            if (ExcelConfig.HEAD_TAG.equals(cellValue)) {
-                mapping = readHeadRow(row, targetClass);
-                break;
-            }
-        }
-        classAnnotationMetaCache.put(targetClass, mapping);
-        return mapping;
+            return null;
+        });
 
     }
 
@@ -59,6 +58,7 @@ public class ReadSimpleExcel<T> extends DefaultReadExelData<T> {
      */
     private Map<Integer, AnnotationMeta> readHeadRow(Row row, Class<T> targetClass) {
         Map<Integer, AnnotationMeta> res = new HashMap<>();
+        //通过策略获取映射关系
         List<AnnotationMeta> annotations = ReadExcelConfig.getReflectStrategy().getAnnotationMetas(targetClass);
         short lastCellNum = row.getLastCellNum();
         for (int i = 1; i < lastCellNum; i++) {

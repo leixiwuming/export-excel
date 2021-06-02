@@ -31,6 +31,6 @@ public class ReadConvert extends BaseConvert {
      */
     @Override
     protected Convert getNullConvert() {
-        return null;
+        return Convert.emptyConvert();
     }
 }

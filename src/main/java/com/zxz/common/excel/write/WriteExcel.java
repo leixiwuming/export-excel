@@ -152,7 +152,7 @@ public abstract class WriteExcel<T> {
             result.getMetaMap().forEach(
                     (cellIndex, meta) -> {
                         if (meta.getDict() != null && 0 != meta.getDict().length) {
-                            setDataValidation(sheet, meta.getDict(), cellIndex, endHeadIndex, endDataIndex);
+                            setDataValidation(sheet, meta.getDict(), cellIndex, endHeadIndex, endDataIndex-1);
                         }
                     }
             );

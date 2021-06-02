@@ -55,7 +55,7 @@ public class CaffeineCache<K, V> extends ComCache<K, V> {
 
     public static ComCache getInstance() {
         if (caffeineCache == null) {
-            synchronized (caffeineCache) {
+            synchronized (CaffeineCache.class) {
                 if (caffeineCache == null) {
                     return new CaffeineCache();
                 }

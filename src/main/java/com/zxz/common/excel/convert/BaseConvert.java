@@ -84,7 +84,7 @@ public abstract class BaseConvert {
      * @return
      */
     public Object getConvertValue(Object value) {
-        return getConvert(value.getClass()).convert(value);
+        return getConvert(value).convert(value);
     }
 
     /**
@@ -106,10 +106,10 @@ public abstract class BaseConvert {
             }
             //缓存不存在
             //如果原类型值和目标类型一致，不做处理,如果时基础数据类型就转换成包装类型
-            Class targetTmpClass = ClassUtil.getPackClass(target.getClass());
+            Class targetTmpClass = ClassUtil.getPackClass(target);
 
             if (sourceClass.equals(targetTmpClass)) {
-                convertCache.put(source.getClass().getSimpleName() + "&" + target.getSimpleName(), Convert.emptyConvert());
+                convertCache.put(sourceClass.getSimpleName() + "&" + target.getSimpleName(), Convert.emptyConvert());
                 return Convert.emptyConvert();
             }
             List<Convert> converts = getConverts();
@@ -134,7 +134,7 @@ public abstract class BaseConvert {
             }
             //未找到转换器错误
             throw new BaseException(String.format(" covert [%s to %s] not find",
-                    source.getClass().getSimpleName(), target.getSimpleName()));
+                    sourceClass.getSimpleName(), target.getSimpleName()));
         } else {
             //查看缓存中有没有null的转换器
             Convert convert = convertCache.get(null);
@@ -157,8 +157,9 @@ public abstract class BaseConvert {
      */
     public Convert getConvert(Object source) {
         if (source != null) {
+            Class<?> sourceClass = source.getClass();
             //先获取缓存里的转换器
-            Convert convert = convertCache.get(source.getClass().getSimpleName());
+            Convert convert = convertCache.get(sourceClass.getSimpleName());
             if (convert != null) {
                 return convert;
             }
@@ -172,12 +173,11 @@ public abstract class BaseConvert {
                 }
                 //转换器可以转换的类型如果是source的超类
                 if (genericClasses.get(0).isAssignableFrom(source.getClass())) {
+                    convertCache.put(sourceClass.getSimpleName(), convert);
                     return convert;
                 }
             }
-            //未找到转换器错误
-            throw new BaseException(String.format(" covert [%s] not find",
-                    source.getClass().getSimpleName()));
+            return Convert.emptyConvert();
 
         } else {
             //查看缓存中有没有null的转换器

@@ -37,6 +37,7 @@ public class JDKReflect implements ReflectStrategy {
         if (fields != null) {
             return fields;
         }
+        fields = new ArrayList<>();
         while (!targetClass.equals(Object.class)) {
             fields.addAll(Arrays.asList(targetClass.getDeclaredFields()));
             targetClass = targetClass.getSuperclass();
@@ -53,6 +54,7 @@ public class JDKReflect implements ReflectStrategy {
         if (annotations != null) {
             return annotations;
         }
+        annotations = new ArrayList<>();
         AnnotationAdapter annotationAdapter = getAnnotationAdapter(targetClass);
         List<Field> allField = getAllField(targetClass);
         if (allField == null || allField.isEmpty()) {
@@ -151,11 +153,19 @@ public class JDKReflect implements ReflectStrategy {
         }
         Type genericInterface = targetClass.getGenericInterfaces()[0];
         if (genericInterface instanceof ParameterizedType) {
-            list = Arrays.asList((Class[]) ((ParameterizedType) genericInterface).getActualTypeArguments());
+            list = Arrays.asList(typeArrToClass(((ParameterizedType) genericInterface).getActualTypeArguments()));
             comCache.put(JDKREFLECT_SPACE, s, list);
             return list;
         }
         return new ArrayList<>();
+    }
+
+    protected Class[] typeArrToClass(Type[] types) {
+        Class[] classes = new Class[types.length];
+        for (int i = 0; i < types.length; i++) {
+            classes[i] = (Class) types[i];
+        }
+        return classes;
     }
 
     /**
@@ -173,7 +183,7 @@ public class JDKReflect implements ReflectStrategy {
         }
         Type genericSuperclass = targetClass.getGenericSuperclass();
         if (genericSuperclass instanceof ParameterizedType) {
-            list = Arrays.asList((Class[]) ((ParameterizedType) genericSuperclass).getActualTypeArguments());
+            list = Arrays.asList(typeArrToClass(((ParameterizedType) genericSuperclass).getActualTypeArguments()));
             comCache.put(JDKREFLECT_SPACE, s, list);
             return list;
         }

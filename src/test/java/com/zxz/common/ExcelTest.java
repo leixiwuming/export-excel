@@ -43,6 +43,7 @@ public class ExcelTest {
     public void readExcel() throws IOException {
         ReadExcel<Entity> readExcel = new ReadSimpleExcel();
         Object read = readExcel.read(new FileInputStream("test.xlsx"), Entity.class);
+        Object read2 = readExcel.read(new FileInputStream("test.xlsx"), Entity.class);
         System.out.println(read);
 
     }
