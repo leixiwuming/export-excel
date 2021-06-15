@@ -1,7 +1,11 @@
 package com.zxz.common.excel.reflect;
 
+import com.zxz.common.excel.ExcelConfig;
+import com.zxz.common.excel.annotation.adapter.AnnotationAdapter;
 import com.zxz.common.excel.model.AnnotationMeta;
+import com.zxz.common.exception.BaseException;
 
+import java.lang.annotation.Annotation;
 import java.util.List;
 
 public interface ReflectStrategy {
@@ -65,4 +69,12 @@ public interface ReflectStrategy {
      */
     List<Class> getSuperclassGeneric(Class targetClass);
 
+    default AnnotationAdapter getAnnotationAdapter(Class<? extends Annotation> annotationClass) {
+        for (AnnotationAdapter annotationAdapter : ExcelConfig.annotationAdapters) {
+            if (annotationAdapter.supports(annotationClass)) {
+                return annotationAdapter;
+            }
+        }
+        throw new BaseException("未找到处理该注解的处理器");
+    }
 }

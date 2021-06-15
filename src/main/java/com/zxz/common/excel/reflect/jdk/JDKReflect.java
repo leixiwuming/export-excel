@@ -55,12 +55,12 @@ public class JDKReflect implements ReflectStrategy {
             return annotations;
         }
         annotations = new ArrayList<>();
-        AnnotationAdapter annotationAdapter = getAnnotationAdapter(targetClass);
+        Class type = getAnnotationType(targetClass);
+        AnnotationAdapter annotationAdapter = getAnnotationAdapter(type);
         List<Field> allField = getAllField(targetClass);
         if (allField == null || allField.isEmpty()) {
             return new ArrayList<>();
         }
-        Class type = getAnnotationType(targetClass);
         for (Field field : allField) {
             Annotation annotation = field.getAnnotation(type);
             if (annotation == null) {
@@ -72,15 +72,6 @@ public class JDKReflect implements ReflectStrategy {
         return annotations;
     }
 
-    private AnnotationAdapter getAnnotationAdapter(Class targetClass) {
-        Class type = getAnnotationType(targetClass);
-        for (AnnotationAdapter annotationAdapter : ExcelConfig.annotationAdapters) {
-            if (annotationAdapter.supports(type)) {
-                return annotationAdapter;
-            }
-        }
-        throw new BaseException("未找到处理该注解的处理器");
-    }
 
     @NotNull
     private <T extends Annotation> Class<T> getAnnotationType(Class targetClass) {
