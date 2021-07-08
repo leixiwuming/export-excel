@@ -18,6 +18,7 @@ public class ExcelTest {
 
     public Entity initEntity() {
         Entity entity = new Entity();
+        entity.setId(Long.MAX_VALUE);
         entity.setName("这是一个测试");
         entity.setDeleted(0);
         entity.setFlag(true);

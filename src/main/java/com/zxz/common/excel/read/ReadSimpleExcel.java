@@ -1,23 +1,37 @@
 package com.zxz.common.excel.read;
 
 import com.zxz.common.excel.ExcelConfig;
-import com.zxz.common.excel.cache.CaffeineCache;
-import com.zxz.common.excel.cache.ComCache;
 import com.zxz.common.excel.model.AnnotationMeta;
+import com.zxz.common.excel.reflect.ReflectStrategy;
 import com.zxz.common.excel.util.CellUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.springframework.validation.annotation.Validated;
 
+import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class ReadSimpleExcel<T> extends DefaultReadExelData<T> {
-    private static final String READSPACE = "simpleRead$";
-    private ComCache comCache;
+    protected static final String READSPACE = "simpleRead$";
 
-    public ReadSimpleExcel() {
-        comCache = CaffeineCache.getInstance();
+
+    protected boolean valid(Class<T> targetClass) {
+        //缓存存储当前类是否需要做数据校验
+        Boolean useValid = (Boolean) comCache.get(READSPACE + targetClass.getSimpleName() + "$valid", targetClass.getSimpleName());
+        if (useValid == null) {
+            useValid = true;
+            comCache.put(READSPACE + targetClass.getSimpleName() + "$valid", targetClass.getSimpleName(), useValid);
+            ReflectStrategy reflectStrategy = ReadExcelConfig.getReflectStrategy();
+            if (reflectStrategy.getClassAnnotation(targetClass, Valid.class) == null) {
+                if (reflectStrategy.getClassAnnotation(targetClass, Validated.class) == null) {
+                    useValid = false;
+                    comCache.put(READSPACE + targetClass.getSimpleName() + "$valid", targetClass.getSimpleName(), useValid);
+                }
+            }
+        }
+        return useValid;
     }
 
     /**

@@ -26,6 +26,11 @@ public interface ReflectStrategy {
     List<AnnotationMeta> getAnnotationMetas(Class targetClass);
 
     /**
+     *
+     */
+    <T extends Annotation>T getClassAnnotation(Class targetClass, Class<T> annotationClass);
+
+    /**
      * 调用方法
      *
      * @param instance

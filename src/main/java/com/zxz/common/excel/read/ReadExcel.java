@@ -1,16 +1,14 @@
 package com.zxz.common.excel.read;
 
+import com.zxz.common.excel.cache.CaffeineCache;
+import com.zxz.common.excel.cache.ComCache;
 import com.zxz.common.excel.model.AnnotationMeta;
-import com.zxz.common.excel.util.Assert;
-import com.zxz.common.excel.util.IOUtil;
+import com.zxz.common.excel.read.res.Result;
 import com.zxz.common.exception.BaseException;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -18,6 +16,14 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class ReadExcel<T> {
+
+    protected ComCache comCache;
+
+    public ReadExcel() {
+        comCache = CaffeineCache.getInstance();
+    }
+
+    protected abstract boolean valid(Class<T> targetClass);
 
     /**
      * 读取excel 头部，
@@ -31,7 +37,7 @@ public abstract class ReadExcel<T> {
      *
      * @return 索引和对应的注解数据
      */
-    protected abstract List<T> readData(Sheet sheet, Class<T> targetClass, Map<Integer, AnnotationMeta> mapping);
+    protected abstract List<Result<T>> readData(Sheet sheet, Class<T> targetClass, Map<Integer, AnnotationMeta> mapping);
 
     /**
      * 读取excel
@@ -54,7 +60,7 @@ public abstract class ReadExcel<T> {
 
     public final Workbook getWorkBook(InputStream inputStream) {
         try {
-           return WorkbookFactory.create(inputStream);
+            return WorkbookFactory.create(inputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }

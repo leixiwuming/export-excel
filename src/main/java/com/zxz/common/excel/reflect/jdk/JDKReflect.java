@@ -1,6 +1,5 @@
 package com.zxz.common.excel.reflect.jdk;
 
-import com.zxz.common.excel.ExcelConfig;
 import com.zxz.common.excel.annotation.AnnotationType;
 import com.zxz.common.excel.annotation.Mapping;
 import com.zxz.common.excel.annotation.adapter.AnnotationAdapter;
@@ -72,22 +71,26 @@ public class JDKReflect implements ReflectStrategy {
         return annotations;
     }
 
-
-    @NotNull
-    private <T extends Annotation> Class<T> getAnnotationType(Class targetClass) {
-        String s = "type" + targetClass.getName();
-        Class<T> type = (Class<T>) comCache.get(JDKREFLECT_SPACE, s);
+    @Override
+    public <T extends Annotation> T getClassAnnotation(Class targetClass, Class<T> annotationClass) {
+        String s = "class_annotation&" + annotationClass.getSimpleName() + targetClass.getName();
+        T type = (T) comCache.get(JDKREFLECT_SPACE, s);
         if (type != null) {
             return type;
         }
-        AnnotationType typeAnnotation = (AnnotationType) targetClass.getAnnotation(AnnotationType.class);
-        if (typeAnnotation == null) {
-            type = (Class<T>) Mapping.class;
-        } else {
-            type = typeAnnotation.value();
+        T annotation = (T) targetClass.getAnnotation(annotationClass);
+        comCache.put(JDKREFLECT_SPACE, s, annotation);
+        return annotation;
+    }
+
+
+    @NotNull
+    private <T extends Annotation> Class<T> getAnnotationType(Class targetClass) {
+        AnnotationType classAnnotation = getClassAnnotation(targetClass, AnnotationType.class);
+        if (classAnnotation == null) {
+            return (Class<T>) Mapping.class;
         }
-        comCache.put(JDKREFLECT_SPACE, s, type);
-        return type;
+        return classAnnotation.value();
     }
 
     @Override

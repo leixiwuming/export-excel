@@ -1,6 +1,9 @@
 package com.zxz.common.excel.util;
 
 public class StringUtils {
+
+    public static final String EMPTY = "";
+
     public static boolean isNull(CharSequence charSequence) {
         return charSequence == null;
     }
@@ -37,6 +40,7 @@ public class StringUtils {
         }
         return new String(ch);
     }
+
     public static String isNullReplace(String str, String replaceStr) {
         if (isBlank(str)) {
             return replaceStr;

@@ -3,14 +3,19 @@ package com.zxz.common.excel.read;
 import com.zxz.common.excel.ExcelConfig;
 import com.zxz.common.excel.convert.BaseConvert;
 import com.zxz.common.excel.model.AnnotationMeta;
+import com.zxz.common.excel.read.res.ReadResult;
+import com.zxz.common.excel.read.res.Result;
+import com.zxz.common.excel.read.res.ValidResult;
 import com.zxz.common.excel.reflect.ReflectStrategy;
 import com.zxz.common.excel.reflect.SingpleMethodParameter;
 import com.zxz.common.excel.util.CellUtil;
 import com.zxz.common.excel.util.ClassUtil;
+import com.zxz.common.excel.util.ValidUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -20,12 +25,14 @@ import java.util.Map;
  * @param <T>
  */
 public abstract class DefaultReadExelData<T> extends ReadExcel<T> {
-    private static List EMPTY_LIST = new ArrayList(0);
+    private static final List EMPTY_LIST = Arrays.asList();
+
 
     protected abstract Map<Integer, AnnotationMeta> readHead(Sheet sheet, Class<T> targetClass);
 
     @Override
-    protected List<T> readData(Sheet sheet, Class<T> targetClass, Map<Integer, AnnotationMeta> mapping) {
+    protected List<Result<T>> readData(Sheet sheet, Class<T> targetClass, Map<Integer, AnnotationMeta> mapping) {
+        boolean valid = valid(targetClass);
         //获取最大行数的行标
         int lastRowNum = sheet.getLastRowNum();
         //航标小于1，说明是个空页或者只含表头,返回空集合
@@ -33,8 +40,7 @@ public abstract class DefaultReadExelData<T> extends ReadExcel<T> {
             return EMPTY_LIST;
         }
         //存放每一行的数据实体
-        List<T> res = new ArrayList();
-
+        List<Result<T>> res = new ArrayList();
         //转换器
         BaseConvert baseConvert = ReadExcelConfig.getConvertThreadLocal();
         //反射策略
@@ -47,7 +53,7 @@ public abstract class DefaultReadExelData<T> extends ReadExcel<T> {
             if (!checkIsData(row)) {
                 continue;
             }
-            res.add(readLine(targetClass, row, mapping, baseConvert, reflectStrategy));
+            res.add(readLine(targetClass, row, mapping, baseConvert, reflectStrategy,valid));
         }
         return res;
 
@@ -69,15 +75,24 @@ public abstract class DefaultReadExelData<T> extends ReadExcel<T> {
         return !(ExcelConfig.EXAMPLE_TAG.equals(cellValue) || ExcelConfig.HEAD_TAG.equals(cellValue));
     }
 
-    private T readLine(Class<T> targetClass, Row row, Map<Integer, AnnotationMeta> mapping, BaseConvert baseConvert, ReflectStrategy reflectStrategy) {
+    private Result readLine(Class<T> targetClass, Row row, Map<Integer, AnnotationMeta> mapping,
+                            BaseConvert baseConvert, ReflectStrategy reflectStrategy, boolean valid) {
+//        ReadResult<T> readResult = new ReadResult<>();
         T t = reflectStrategy.newInstance(targetClass);
+        ValidResult<T> validResult = new ValidResult();
+        validResult.setData(t);
         mapping.forEach(
                 (k, v) -> {
                     Object cellValue = CellUtil.getCellValue(row.getCell(k));
                     setFieldValue(cellValue, v, t, targetClass, baseConvert, reflectStrategy);
+                    if (valid){
+                        ValidUtil.valid(t, v.getFieldName(), validResult,
+                                row.getSheet().getWorkbook().getSheetIndex(row.getSheet().getSheetName()) + 1,
+                                row.getRowNum() + 1, k);
+                    }
                 }
         );
-        return t;
+        return validResult;
     }
 
 

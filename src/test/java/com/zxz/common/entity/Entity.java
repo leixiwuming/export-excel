@@ -2,14 +2,20 @@ package com.zxz.common.entity;
 
 import com.zxz.common.excel.annotation.AnnotationType;
 import com.zxz.common.excel.annotation.Mapping;
+import org.hibernate.validator.constraints.NotEmpty;
+import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 
 @AnnotationType(Mapping.class)
+@Validated
 public class Entity {
-    @Mapping(value = "名称",notNull = true,defaultValue = "1")
+    @Mapping(value = "主键",textColumn = true)
+    private Long id;
+    @Mapping(value = "名称",notNull = true)
+    @NotEmpty(message = "名称不能为空")
     private String name;
     @Mapping("长度")
     private Double length;
@@ -25,6 +31,14 @@ public class Entity {
     private LocalDateTime createDate;
     @Mapping(value = "身份证",textColumn = true)
     private String idCard;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getIdCard() {
         return idCard;
